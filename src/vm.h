@@ -10,7 +10,7 @@ typedef struct ByteList {
 
 typedef struct BlarbVM {
 	ByteList *stack;
-	BlarbVM_WORD registers[32];
+	BlarbVM_WORD registers[16];
 } BlarbVM;
 
 void Stack_push(ByteList **stack, BlarbVM_WORD value);

@@ -31,12 +31,39 @@ BlarbVM_WORD Stack_pop(ByteList **stack) {
 	return value;
 }
 
+BlarbVM_WORD BlarbVM_parseInt(char **line) {
+	// FIXME error handling!
+	char value[16];
+	int i;
+	for (i = 0; **line >= '0' && **line <= '9'; i++, (*line)++) {
+		value[i] = **line;
+	}
+	value[i] = '\0';
+	printf("Val: %d\n", atoi(value));
+	return atoi(value);
+}
+
 void BlarbVM_executeLine(BlarbVM *vm, char *line) {
-	while (*line) {
-		if (*line >= '0' && *line <= '9') {
-			Stack_push(&vm->stack, atoi(line)); // parse the int
+	int i;
+	char *it = line;
+
+	while (*it) {
+		printf("l: %s\n", it);
+		if (*it == ' ' || *it == '\t') {
+		} else if (*it >= '0' && *it <= '9') {
+			BlarbVM_WORD value = BlarbVM_parseInt(&it);
+			Stack_push(&vm->stack, value);
+		} else if (*it == '~') {
+			// TODO plop into a register
+		} else {
+			fprintf(stderr, "Invalid syntax '%c', %d: %s\n", *it, i, line);
+			exitWithError("Syntax error");
 		}
-		line++;
+
+		if (*it) {
+			it++;
+			i++;
+		}
 	}
 }
 
@@ -49,6 +76,8 @@ void BlarbVM_dumpDebug(BlarbVM *vm) {
 		printf("%d: %d '%c'\n", i, value, value);
 	}
 	printf("\nStack:\n");
+
+	i = 0;
 	for (ByteList *head = vm->stack; head; head = head->next, i++) {
 		BlarbVM_WORD value = head->value;
 		printf("%d: %d '%c'\n", i, value, value);

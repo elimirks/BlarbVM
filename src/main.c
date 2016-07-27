@@ -9,13 +9,9 @@ int main(int argc, char **argv) {
 	BlarbVM vm;
 	memset(&vm, 0, sizeof(BlarbVM));
 
-	BlarbVM_executeLine(&vm, "1 2 3");
+	BlarbVM_executeLine(&vm, "42 65 3");
 	BlarbVM_dumpDebug(&vm);
 
-	printf("%d\n", Stack_pop(&vm.stack));
-	printf("%d\n", Stack_pop(&vm.stack));
-
-	printf("Success!\n");
 	return 0;
 }
 
