@@ -33,6 +33,22 @@ BlarbVM_WORD Stack_pop(ByteList **stack) {
 	return value;
 }
 
+void Stack_set(ByteList **stack, BlarbVM_WORD index, BlarbVM_WORD value) {
+	ByteList *head = *stack;
+
+	while (index > 0 && head) {
+		head = head->next;
+		index--;
+	}
+
+	if ( ! head) {
+		fprintf(stderr, "Tried setting over the stack limit: %d\n", index);
+		terminateVM();
+	}
+
+	head->value = value;
+}
+
 BlarbVM_WORD Stack_peek(ByteList **stack, BlarbVM_WORD index) {
 	ByteList *head = *stack;
 
@@ -63,18 +79,90 @@ BlarbVM_WORD BlarbVM_parseInt(char **line) {
 void BlarbVM_setRegisterFromStack(BlarbVM *vm) {
 	BlarbVM_WORD stackIndex = Stack_peek(&vm->stack, 0);
 	BlarbVM_WORD regIndex = Stack_peek(&vm->stack, 1);
+
 	vm->registers[regIndex] = Stack_peek(&vm->stack, stackIndex);
+
+	// Pop args
+	Stack_pop(&vm->stack);
+	Stack_pop(&vm->stack);
 }
 
 void BlarbVM_pushRegisterToStack(BlarbVM *vm) {
 	BlarbVM_WORD regIndex = Stack_peek(&vm->stack, 0);
+
 	BlarbVM_WORD regValue = vm->registers[regIndex];
+
+	// Pop args
+	Stack_pop(&vm->stack);
+
 	Stack_push(&vm->stack, regValue);
+}
+
+void BlarbVM_nandOnStack(BlarbVM *vm) {
+	BlarbVM_WORD firstNandIndex = Stack_peek(&vm->stack, 0);
+	BlarbVM_WORD secondNandIndex = Stack_peek(&vm->stack, 1);
+	BlarbVM_WORD bitIndex = Stack_peek(&vm->stack, 2);
+
+	if (bitIndex < 0 || bitIndex >= 32) {
+		fprintf(stderr, "Bit index %d out of range [0, 32)\n", bitIndex);
+		terminateVM();
+	}
+
+	BlarbVM_WORD mask = 1 << bitIndex;
+	BlarbVM_WORD firstNandValue = Stack_peek(&vm->stack, firstNandIndex);
+	BlarbVM_WORD secondNandValue = Stack_peek(&vm->stack, secondNandIndex);
+
+	BlarbVM_WORD result = ~(firstNandValue & secondNandIndex);
+
+	// Pop args
+	Stack_pop(&vm->stack);
+	Stack_pop(&vm->stack);
+	Stack_pop(&vm->stack);
+
+	Stack_push(&vm->stack, result);
+}
+
+void BlarbVM_setBitOnStack(BlarbVM *vm) {
+	BlarbVM_WORD destinationIndex = Stack_peek(&vm->stack, 0);
+	BlarbVM_WORD bitValue = Stack_peek(&vm->stack, 1);
+	BlarbVM_WORD bitIndex = Stack_peek(&vm->stack, 2);
+
+	if (bitValue != 0 && bitValue != 1) {
+		fprintf(stderr, "Bit value %d out of range [0, 1]\n", bitValue);
+		terminateVM();
+	}
+
+	BlarbVM_WORD destinationValue = Stack_peek(&vm->stack, destinationIndex);
+	BlarbVM_WORD result = bitValue
+		? destinationValue | (1 << bitIndex)
+		: destinationValue & ~(1 << bitIndex);
+	Stack_set(&vm->stack, destinationIndex, result);
+
+	// Pop args
+	Stack_pop(&vm->stack);
+	Stack_pop(&vm->stack);
+	Stack_pop(&vm->stack);
+}
+
+void BlarbVM_popOnStack(BlarbVM *vm) {
+	BlarbVM_WORD popAmount = Stack_pop(&vm->stack);
+
+	while (popAmount >= 1) {
+		Stack_pop(&vm->stack);
+		popAmount--;
+
+		if ( ! &vm->stack) {
+			fprintf(stderr, "Tried popping more stack elements than avalaible\n");
+			terminateVM();
+		}
+	}
 }
 
 void BlarbVM_executeLine(BlarbVM *vm, char *line) {
 	int i;
 	char *it = line;
+
+	// TODO make sure there is whitespace surrounding native ops!
 
 	while (*it) {
 		if (*it == ' ' || *it == '\t') {
@@ -83,9 +171,14 @@ void BlarbVM_executeLine(BlarbVM *vm, char *line) {
 			Stack_push(&vm->stack, value);
 		} else if (*it == '~') {
 			BlarbVM_setRegisterFromStack(vm);
-			// TODO make sure there is whitespace!
 		} else if (*it == '$') {
 			BlarbVM_pushRegisterToStack(vm);
+		} else if (*it == '!') {
+			BlarbVM_nandOnStack(vm);
+		} else if (*it == '=') {
+			BlarbVM_setBitOnStack(vm);
+		} else if (*it == '^') {
+			BlarbVM_popOnStack(vm);
 		} else {
 			fprintf(stderr, "Invalid syntax '%c', %d: %s\n", *it, i, line);
 			terminateVM();
