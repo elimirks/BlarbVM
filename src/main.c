@@ -1,24 +1,29 @@
+#include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 
 #include "main.h"
 #include "vm.h"
 
-BlarbVM vm;
+BlarbVM *vm;
 
 int main(int argc, char **argv) {
-	memset(&vm, 0, sizeof(BlarbVM));
+	vm = BlarbVM_init();
 
-	BlarbVM_executeLine(&vm, "42 5 2 ~ 65 5 $");
-	BlarbVM_dumpDebug(&vm);
+	BlarbVM_addLine(vm, "42 5 2 ~");
+	BlarbVM_addLine(vm, "65 5 $ 12 4 1 4 3 !");
+	BlarbVM_execute(vm);
+
+	BlarbVM_dumpDebug(vm);
+	BlarbVM_destroy(vm);
 
 	return 0;
 }
 
 void terminateVM() {
 	fprintf(stderr, "Terminating VM.\n");
-	BlarbVM_dumpDebug(&vm);
+	BlarbVM_dumpDebug(vm);
+	BlarbVM_destroy(vm);
 	exit(1);
 }
 

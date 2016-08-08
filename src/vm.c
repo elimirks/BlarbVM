@@ -1,3 +1,4 @@
+#include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -158,6 +159,32 @@ void BlarbVM_popOnStack(BlarbVM *vm) {
 	}
 }
 
+void BlarbVM_addLine(BlarbVM *vm, char *line) {
+	if (vm->lineCount % 2 == 0) {
+		// Double the size when space runs out - amortized time is O(1)
+		vm->lines = vm->lineCount == 0
+			? malloc(sizeof(char *) * 1)
+			: realloc(vm->lines, sizeof(char *) * vm->lineCount * 2);
+	}
+
+	vm->lines[vm->lineCount] = malloc(strlen(line) + 1);
+	strcpy(vm->lines[vm->lineCount], line);
+
+	// TODO check for labels
+
+	vm->lineCount++;
+}
+
+void BlarbVM_execute(BlarbVM *vm) {
+	int lineToExecute = 0;
+
+	// TODO make this access the line pointer register (0)
+	while (lineToExecute < vm->lineCount) {
+		BlarbVM_executeLine(vm, vm->lines[lineToExecute]);
+		lineToExecute++;
+	}
+}
+
 void BlarbVM_executeLine(BlarbVM *vm, char *line) {
 	int i;
 	char *it = line;
@@ -207,5 +234,21 @@ void BlarbVM_dumpDebug(BlarbVM *vm) {
 		printf("%d: %d '%c'\n", i, value, value);
 	}
 	printf("\nDump complete.\n\n");
+}
+
+BlarbVM * BlarbVM_init() {
+	BlarbVM *vm = malloc(sizeof(BlarbVM));
+	memset(vm, 0, sizeof(BlarbVM));
+	return vm;
+}
+
+void BlarbVM_destroy(BlarbVM *vm) {
+	while (vm->stack) {
+		Stack_pop(&vm->stack);
+	}
+	for (int i = 0; i < vm->lineCount; i++) {
+		free(vm->lines[i]);
+	}
+	free(vm->lines);
 }
 
