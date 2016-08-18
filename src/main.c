@@ -8,10 +8,14 @@
 BlarbVM *vm;
 
 int main(int argc, char **argv) {
+	if (argc == 1) {
+		fprintf(stderr, "Usage: %s path/to/code.blarb\n", argv[0]);
+		return 1;
+	}
+
 	vm = BlarbVM_init();
 
-	BlarbVM_addLine(vm, "42 5 2 ~");
-	BlarbVM_addLine(vm, "65 5 $ 12 4 1 4 3 !");
+	BlarbVM_loadFile(vm, argv[1]);
 	BlarbVM_execute(vm);
 
 	BlarbVM_dumpDebug(vm);

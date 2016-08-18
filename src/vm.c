@@ -66,6 +66,29 @@ BlarbVM_WORD Stack_peek(ByteList **stack, BlarbVM_WORD index) {
 	return head->value;
 }
 
+// Sets the line pointer register to the line of the given label
+// Also pushes the current line to the stack
+// Implicit: "0 $ #labelName 0 2 ~ 1 ^"
+void BlarbVM_jumpToLabel(BlarbVM *vm, char *line) {
+	char name[256];
+	int i;
+
+	for (i = 0; line[i] >= 'a' && line[i] <= 'z'; i++) {
+		name[i] = line[i];
+	}
+	name[i + 1] = '\0';
+
+	for (i = 0; i < vm->labelPointerCount; i++) {
+		if (strcmp(vm->labelPointers[i].name, name) == 0) {
+			Stack_push(&vm->stack, vm->registers[0]); // return address
+			vm->registers[0] = vm->labelPointers[i].line;
+			return;
+		}
+	}
+	fprintf(stderr, "Label not found: %s\n", name);
+	terminateVM();
+}
+
 BlarbVM_WORD BlarbVM_parseInt(char **line) {
 	// FIXME error handling!
 	char value[16];
@@ -102,47 +125,24 @@ void BlarbVM_pushRegisterToStack(BlarbVM *vm) {
 void BlarbVM_nandOnStack(BlarbVM *vm) {
 	BlarbVM_WORD firstNandIndex = Stack_peek(&vm->stack, 0);
 	BlarbVM_WORD secondNandIndex = Stack_peek(&vm->stack, 1);
-	BlarbVM_WORD bitIndex = Stack_peek(&vm->stack, 2);
 
-	if (bitIndex < 0 || bitIndex >= 32) {
-		fprintf(stderr, "Bit index %d out of range [0, 32)\n", bitIndex);
-		terminateVM();
-	}
-
-	BlarbVM_WORD mask = 1 << bitIndex;
 	BlarbVM_WORD firstNandValue = Stack_peek(&vm->stack, firstNandIndex);
 	BlarbVM_WORD secondNandValue = Stack_peek(&vm->stack, secondNandIndex);
 
-	BlarbVM_WORD result = ~(firstNandValue & secondNandIndex);
+	BlarbVM_WORD result = ~(firstNandValue & secondNandValue);
+	Stack_set(&vm->stack, secondNandIndex, result);
 
 	// Pop args
 	Stack_pop(&vm->stack);
 	Stack_pop(&vm->stack);
-	Stack_pop(&vm->stack);
-
-	Stack_push(&vm->stack, result);
 }
 
-void BlarbVM_setBitOnStack(BlarbVM *vm) {
-	BlarbVM_WORD destinationIndex = Stack_peek(&vm->stack, 0);
-	BlarbVM_WORD bitValue = Stack_peek(&vm->stack, 1);
-	BlarbVM_WORD bitIndex = Stack_peek(&vm->stack, 2);
-
-	if (bitValue != 0 && bitValue != 1) {
-		fprintf(stderr, "Bit value %d out of range [0, 1]\n", bitValue);
-		terminateVM();
-	}
-
-	BlarbVM_WORD destinationValue = Stack_peek(&vm->stack, destinationIndex);
-	BlarbVM_WORD result = bitValue
-		? destinationValue | (1 << bitIndex)
-		: destinationValue & ~(1 << bitIndex);
-	Stack_set(&vm->stack, destinationIndex, result);
-
-	// Pop args
+// Returns true if the conditional is a success
+int BlarbVM_conditionalFromStack(BlarbVM *vm) {
+	BlarbVM_WORD stackIndex = Stack_peek(&vm->stack, 0);
+	BlarbVM_WORD conditionalValue = Stack_peek(&vm->stack, 0);
 	Stack_pop(&vm->stack);
-	Stack_pop(&vm->stack);
-	Stack_pop(&vm->stack);
+	return conditionalValue != 0;
 }
 
 void BlarbVM_popOnStack(BlarbVM *vm) {
@@ -159,6 +159,37 @@ void BlarbVM_popOnStack(BlarbVM *vm) {
 	}
 }
 
+void BlarbVM_addLabelPointer(BlarbVM *vm, char *name, int line) {
+	if (vm->labelPointerCount % 2 == 0) {
+		// Double the size when space runs out - amortized time is O(1)
+		vm->labelPointers = vm->labelPointerCount == 0
+			? malloc(sizeof(char *) * 1)
+			: realloc(vm->labelPointers, sizeof(char *) * vm->labelPointerCount * 2);
+	}
+
+	LabelPointer *newLabel = &vm->labelPointers[vm->labelPointerCount];
+	newLabel->name = malloc(sizeof(char) * strlen(name));
+	strcpy(newLabel->name, name);
+	newLabel->line = line;
+
+	vm->labelPointerCount++;
+}
+
+void BlarbVM_loadFile(BlarbVM *vm, char *fileName) {
+	FILE *fp = fopen(fileName, "r");
+	if ( ! fp) {
+		perror("fopen");
+		terminateVM();
+	}
+
+	char line[256];
+	while (fgets(line, sizeof(line), fp)) {
+		BlarbVM_addLine(vm, line);
+	}
+
+	fclose(fp);
+}
+
 void BlarbVM_addLine(BlarbVM *vm, char *line) {
 	if (vm->lineCount % 2 == 0) {
 		// Double the size when space runs out - amortized time is O(1)
@@ -170,29 +201,50 @@ void BlarbVM_addLine(BlarbVM *vm, char *line) {
 	vm->lines[vm->lineCount] = malloc(strlen(line) + 1);
 	strcpy(vm->lines[vm->lineCount], line);
 
-	// TODO check for labels
+	// Add label on lines beginning with #
+	// TODO: ignore spaces and include capital alphabets
+	// TODO: error handling. What if the label already exists?
+	if (strlen(line) > 0 && line[0] == '#') {
+		char name[256];
+
+		int i;
+		for (i = 1; line[i] >= 'a' && line[i] <= 'z'; i++) {
+			name[i-1] = line[i];
+		}
+		name[i] = '\0';
+
+		BlarbVM_addLabelPointer(vm, name, vm->lineCount);
+	}
 
 	vm->lineCount++;
 }
 
 void BlarbVM_execute(BlarbVM *vm) {
-	int lineToExecute = 0;
-
-	// TODO make this access the line pointer register (0)
-	while (lineToExecute < vm->lineCount) {
-		BlarbVM_executeLine(vm, vm->lines[lineToExecute]);
-		lineToExecute++;
+	BlarbVM_WORD *lineToExecute = &(vm->registers[0]); // line pointer
+	while (*lineToExecute < vm->lineCount) {
+		BlarbVM_executeLine(vm, vm->lines[*lineToExecute]);
+		(*lineToExecute)++;
 	}
 }
 
 void BlarbVM_executeLine(BlarbVM *vm, char *line) {
+	// Don't run labels!
+	if (strlen(line) > 0 && *line == '#') {
+		return;
+	}
+
 	int i;
 	char *it = line;
 
 	// TODO make sure there is whitespace surrounding native ops!
 
 	while (*it) {
-		if (*it == ' ' || *it == '\t') {
+		if (*it <= ' ' || *it == '\t') {
+		} else if (*it >= 'a' && *it <= 'z') {
+			BlarbVM_jumpToLabel(vm, it);
+			return;
+		} else if (*it == ';') {
+			return; // Blarb comment
 		} else if (*it >= '0' && *it <= '9') {
 			BlarbVM_WORD value = BlarbVM_parseInt(&it);
 			Stack_push(&vm->stack, value);
@@ -202,8 +254,10 @@ void BlarbVM_executeLine(BlarbVM *vm, char *line) {
 			BlarbVM_pushRegisterToStack(vm);
 		} else if (*it == '!') {
 			BlarbVM_nandOnStack(vm);
-		} else if (*it == '=') {
-			BlarbVM_setBitOnStack(vm);
+		} else if (*it == '?') {
+			if ( ! BlarbVM_conditionalFromStack(vm)) {
+				return;
+			}
 		} else if (*it == '^') {
 			BlarbVM_popOnStack(vm);
 		} else {
@@ -219,9 +273,17 @@ void BlarbVM_executeLine(BlarbVM *vm, char *line) {
 }
 
 void BlarbVM_dumpDebug(BlarbVM *vm) {
+	int i;
+
 	printf("\nBeginning BlarbVM dump:\n");
+
+	printf("\nDefined labels:\n");
+	for (i = 0; i < vm->labelPointerCount; i++) {
+		LabelPointer *label = &vm->labelPointers[i];
+		printf("%d: %s\n", label->line, label->name);
+	}
+
 	printf("\nRegisters:\n");
-	int i = 0;
 	for (i = 0; i < sizeof(vm->registers); i++) {
 		BlarbVM_WORD value = vm->registers[i];
 		printf("%d: %d '%c'\n", i, value, value);
@@ -246,9 +308,16 @@ void BlarbVM_destroy(BlarbVM *vm) {
 	while (vm->stack) {
 		Stack_pop(&vm->stack);
 	}
+
 	for (int i = 0; i < vm->lineCount; i++) {
 		free(vm->lines[i]);
 	}
 	free(vm->lines);
+
+	// FIXME figure out why this isn't freeing properly
+	for (int i = 0; i < vm->labelPointerCount; i++) {
+		//free(vm->labelPointers[i].name);
+	}
+	//free(vm->labelPointers);
 }
 

@@ -8,24 +8,25 @@ typedef struct ByteList {
 	BlarbVM_WORD value;
 } ByteList;
 
-/* TODO: In the future, use labels as a precompiler construct
 typedef struct LabelPointer {
 	char *name;
-	BlarbVM_WORD line;
+	int line;
 } LabelPointer;
-*/
 
 typedef struct BlarbVM {
 	ByteList *stack;
-	BlarbVM_WORD registers[16];
+	BlarbVM_WORD registers[8];
 	char **lines;
 	int lineCount;
-	// LabelPointer *labelPointers;
+	LabelPointer *labelPointers;
+	int labelPointerCount;
 } BlarbVM;
 
 void Stack_push(ByteList **stack, BlarbVM_WORD value);
 BlarbVM_WORD Stack_pop(ByteList **stack);
 BlarbVM_WORD Stack_printDebug(ByteList **stack);
+
+void BlarbVM_loadFile(BlarbVM *vm, char *fileName);
 
 /**
  * @param line The line to add - will be free'd in BlarbVM_destroy
