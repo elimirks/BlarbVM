@@ -76,7 +76,7 @@ void BlarbVM_jumpToLabel(BlarbVM *vm, char *line) {
 	for (i = 0; line[i] >= 'a' && line[i] <= 'z'; i++) {
 		name[i] = line[i];
 	}
-	name[i + 1] = '\0';
+	name[i] = '\0';
 
 	for (i = 0; i < vm->labelPointerCount; i++) {
 		if (strcmp(vm->labelPointers[i].name, name) == 0) {

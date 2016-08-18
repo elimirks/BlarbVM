@@ -1,27 +1,67 @@
 7 3 nandi ; Should be -4
 4 12 andi ; Should be 4
+0 noti    ; Should be -1 (all ones)
+8 4 ori   ; Should be 12
+8 12 xori ; Should be 4
 
 exit
+
+
 
 ; ANDs the two immediate values
 ; Circuit: (A NAND B) NAND (A NAND B)
 #andi
-	4 1 ~ 1 $; Copy two args
-	4 1 ~ 1 $
-	nandi
+	4 3 ! ; A NAND B
+	4 4 !
 
-	; NAND the above result with itself
-	2 1 ~ 1 $
-	nandi
+	2 0 ~ 2 ^ ; Pop the stack frame
 
-	2 1 ~ 1 ^ ; Pop and store the result
-	2 0 ~ 3 ^ 1 $ ; Pop the stack frame and return the result
+
 
 ; NANDs the two immediate values
 #nandi ;
 	4 3 !         ; Nand it up
 	2 1 ~ 2 ^ 1 $ ; Get rid of extra argument
 	2 0 ~ 1 ^     ; return
+
+
+
+; NOTs the immediate value
+; Circuit: A NAND A
+#noti
+	3 3 ! ; NAND the arg with itself
+	2 0 ~ 1 ^
+
+
+
+; ORs the two immediate values
+; Circuit: (A NAND A ) NAND (B NAND B)
+#ori
+	4 4 !
+	3 3 !
+	4 3 !
+	2 0 ~ 2 ^
+
+
+
+; XORs the two immediate values
+; Circuit: (A NAND B) AND (A OR B)
+; I wrote this guy without pure NANDs for sanity reasons
+#xori
+	4 1 ~ 1 $ ; Copy A and B
+	4 1 ~ 1 $
+	nandi
+
+	5 1 ~ 1 $ ; Copy A and B again
+	5 1 ~ 1 $
+	ori
+
+	andi
+
+	2 1 ~ 1 ^ ; Pop n' store
+	2 0 ~ 3 ^ 1 $ ; Return the stored result
+
+
 
 #exit
 	100000 2 0 ~ 2 ^; hack to exit - jump to line 100000
