@@ -1,12 +1,28 @@
-7 3 nandi
+7 3 nandi ; Should be -4
+4 12 andi ; Should be 4
+
 exit
 
+; ANDs the two immediate values
+; Circuit: (A NAND B) NAND (A NAND B)
+#andi
+	4 1 ~ 1 $; Copy two args
+	4 1 ~ 1 $
+	nandi
+
+	; NAND the above result with itself
+	2 1 ~ 1 $
+	nandi
+
+	2 1 ~ 1 ^ ; Pop and store the result
+	2 0 ~ 3 ^ 1 $ ; Pop the stack frame and return the result
+
 ; NANDs the two immediate values
-#nandi
+#nandi ;
 	4 3 !         ; Nand it up
-	1 2 ~ 2 ^ 1 $ ; Get rid of extra argument
-	0 2 ~ 1 ^     ; return
+	2 1 ~ 2 ^ 1 $ ; Get rid of extra argument
+	2 0 ~ 1 ^     ; return
 
 #exit
-	100000 0 2 ~ 2 ^; hack to exit - jump to line 100000
+	100000 2 0 ~ 2 ^; hack to exit - jump to line 100000
 

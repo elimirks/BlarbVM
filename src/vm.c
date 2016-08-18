@@ -101,8 +101,8 @@ BlarbVM_WORD BlarbVM_parseInt(char **line) {
 }
 
 void BlarbVM_setRegisterFromStack(BlarbVM *vm) {
-	BlarbVM_WORD stackIndex = Stack_peek(&vm->stack, 0);
-	BlarbVM_WORD regIndex = Stack_peek(&vm->stack, 1);
+	BlarbVM_WORD stackIndex = Stack_peek(&vm->stack, 1);
+	BlarbVM_WORD regIndex = Stack_peek(&vm->stack, 0);
 
 	vm->registers[regIndex] = Stack_peek(&vm->stack, stackIndex);
 
@@ -163,8 +163,8 @@ void BlarbVM_addLabelPointer(BlarbVM *vm, char *name, int line) {
 	if (vm->labelPointerCount % 2 == 0) {
 		// Double the size when space runs out - amortized time is O(1)
 		vm->labelPointers = vm->labelPointerCount == 0
-			? malloc(sizeof(char *) * 1)
-			: realloc(vm->labelPointers, sizeof(char *) * vm->labelPointerCount * 2);
+			? malloc(sizeof(LabelPointer) * 2)
+			: realloc(vm->labelPointers, sizeof(LabelPointer) * vm->labelPointerCount * 2);
 	}
 
 	LabelPointer *newLabel = &vm->labelPointers[vm->labelPointerCount];
@@ -209,9 +209,9 @@ void BlarbVM_addLine(BlarbVM *vm, char *line) {
 
 		int i;
 		for (i = 1; line[i] >= 'a' && line[i] <= 'z'; i++) {
-			name[i-1] = line[i];
+			name[i - 1] = line[i];
 		}
-		name[i] = '\0';
+		name[i - 1] = '\0';
 
 		BlarbVM_addLabelPointer(vm, name, vm->lineCount);
 	}
@@ -221,7 +221,7 @@ void BlarbVM_addLine(BlarbVM *vm, char *line) {
 
 void BlarbVM_execute(BlarbVM *vm) {
 	BlarbVM_WORD *lineToExecute = &(vm->registers[0]); // line pointer
-	while (*lineToExecute < vm->lineCount) {
+	while (*lineToExecute < vm->lineCount && *lineToExecute >= 0) {
 		BlarbVM_executeLine(vm, vm->lines[*lineToExecute]);
 		(*lineToExecute)++;
 	}
@@ -229,7 +229,7 @@ void BlarbVM_execute(BlarbVM *vm) {
 
 void BlarbVM_executeLine(BlarbVM *vm, char *line) {
 	// Don't run labels!
-	if (strlen(line) > 0 && *line == '#') {
+	if (line && strlen(line) > 0 && line[0] == '#') {
 		return;
 	}
 
@@ -314,10 +314,9 @@ void BlarbVM_destroy(BlarbVM *vm) {
 	}
 	free(vm->lines);
 
-	// FIXME figure out why this isn't freeing properly
 	for (int i = 0; i < vm->labelPointerCount; i++) {
-		//free(vm->labelPointers[i].name);
+		free(vm->labelPointers[i].name);
 	}
-	//free(vm->labelPointers);
+	free(vm->labelPointers);
 }
 

@@ -2,7 +2,7 @@ BlarbVM
 =======
 
 Currently supported operations:
-- b a ~ Store the value of a in register b
+- a b ~ Store the value of a in register b
 - a $ Push register a onto the stack
 - b a ! NANDS index a with index b and stores the result in index b
 - a ^ pop 'a' elements
