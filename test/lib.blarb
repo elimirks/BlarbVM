@@ -7,7 +7,7 @@
 ;9 128 addi   ; Should be 137
 ;37 12 subi   ; Should be 25
 
-2 2 2 42 3 set
+2 2 2 42 3 seti
 
 exit
 
@@ -156,9 +156,9 @@ exit
 
 
 
-; Usage: value index set
+; Usage: value index seti
 ; Set's a word on the stack (at "index") to "value"
-#set
+#seti
 	3 copy ; value
 
 	3 copy ; index
