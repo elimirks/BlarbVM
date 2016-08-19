@@ -1,10 +1,10 @@
-7 3 nandi ; Should be -4
-4 12 andi ; Should be 4
-0 noti    ; Should be -1 (all ones)
-8 4 ori   ; Should be 12
-8 12 xori ; Should be 4
-
+7 3 nandi    ; Should be -4
+4 12 andi    ; Should be 4
+0 noti       ; Should be -1 (all ones)
+8 4 ori      ; Should be 12
+8 12 xori    ; Should be 4
 255 lshiftil ; Should be 510
+9 128 addi   ; Should be 137
 
 exit
 
@@ -67,24 +67,20 @@ exit
 
 #lshiftil
 	; Bit mask array (null terminated)
-	0 1 2 4 8
-	16 32 64 128 256
-	512 1024 2048 4096 8192
-	16384 32768 65536 131072 262144
-	524288 1048576 2097152 4194304 8388608
-	16777216 33554432 67108864 134217728 268435456
-	536870912 1073741824 2147483648 0
+	0 1 2 4 8 16 32 64 128 256 512 1024 2048 4096 8192 16384 32768 65536
+	131072 262144 524288 1048576 2097152 4194304 8388608 16777216 33554432
+	67108864 134217728 268435456 536870912 1073741824 2147483648 0
 
 	37 1 ~ 1 $ ; Copy of the param
 	lshiftilloop
 
 #lshiftilloop
 	1 ^ ; Pop the return address (hack)
-	3 ? lshiftlrun
+	3 ? lshiftilrun
 	; At this point, there will just be 0,1,<returnvalue> on the stack
 	2 1 ~
 	5 0 ~ 5 ^ 1 $
-#lshiftlrun
+#lshiftilrun
 	1 ^ ; Pop the return address (hack)
 
 	;0 1 2 4 .. 128 0 value
@@ -107,6 +103,36 @@ exit
 	2 1 ~ 4 ^ 1 $
 
 	lshiftilloop
+
+
+
+; Recursive adder
+#addi
+	; Base case: If the param B is 0, return param A by itself.
+	3 1 ~ 1 $ tobooli
+	1 xori ; negate the boolean
+	1 ? 3 0 ~ 3 ^ ; return A
+	1 ^ ; Pop the above conditional boolean
+
+	4 1 ~ 1 $ ; Copy A and B
+	4 1 ~ 1 $
+	xori ; sum
+
+	5 1 ~ 1 $ ; Copy A and B again
+	5 1 ~ 1 $
+	andi ; carry
+	lshiftil
+
+	addi ; Recurse!
+
+	2 1 ~
+	3 0 ~ 4 ^ 1 $
+
+
+
+#tobooli
+	2 ? 2 0 ~ 2 ^ 1
+	2 0 ~ 2 ^ 0
 
 
 
