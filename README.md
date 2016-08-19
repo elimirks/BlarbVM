@@ -25,3 +25,5 @@ e.g.
 
 To test, run "./blarb test/lib.blarb"
 
+The stack stores a collection of words (32 bits each)
+

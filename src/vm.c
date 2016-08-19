@@ -140,7 +140,7 @@ void BlarbVM_nandOnStack(BlarbVM *vm) {
 // Returns true if the conditional is a success
 int BlarbVM_conditionalFromStack(BlarbVM *vm) {
 	BlarbVM_WORD stackIndex = Stack_peek(&vm->stack, 0);
-	BlarbVM_WORD conditionalValue = Stack_peek(&vm->stack, 0);
+	BlarbVM_WORD conditionalValue = Stack_peek(&vm->stack, stackIndex);
 	Stack_pop(&vm->stack);
 	return conditionalValue != 0;
 }
@@ -284,16 +284,16 @@ void BlarbVM_dumpDebug(BlarbVM *vm) {
 	}
 
 	printf("\nRegisters:\n");
-	for (i = 0; i < sizeof(vm->registers); i++) {
+	for (i = 0; i < sizeof(vm->registers) / sizeof(BlarbVM_WORD); i++) {
 		BlarbVM_WORD value = vm->registers[i];
-		printf("%d: %d '%c'\n", i, value, value);
+		printf("%d: %d \n", i, value);
 	}
 	printf("\nStack:\n");
 
 	i = 0;
 	for (ByteList *head = vm->stack; head; head = head->next, i++) {
 		BlarbVM_WORD value = head->value;
-		printf("%d: %d '%c'\n", i, value, value);
+		printf("%d: %d\n", i, value);
 	}
 	printf("\nDump complete.\n\n");
 }

@@ -1,7 +1,9 @@
 #ifndef __DATA_STRUCTURES_H__
 #define __DATA_STRUCTURES_H__
 
-typedef char BlarbVM_WORD;
+#include <stdint.h>
+
+typedef uint32_t BlarbVM_WORD;
 
 typedef struct ByteList {
 	struct ByteList *next;
