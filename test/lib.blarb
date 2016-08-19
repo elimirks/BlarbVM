@@ -1,11 +1,13 @@
-7 3 nandi    ; Should be -4
-4 12 andi    ; Should be 4
-0 noti       ; Should be -1 (all ones)
-8 4 ori      ; Should be 12
-8 12 xori    ; Should be 4
-255 lshiftil ; Should be 510
-9 128 addi   ; Should be 137
-37 12 subi   ; Should be 25
+;7 3 nandi    ; Should be -4
+;4 12 andi    ; Should be 4
+;0 noti       ; Should be -1 (all ones)
+;8 4 ori      ; Should be 12
+;8 12 xori    ; Should be 4
+;255 lshiftil ; Should be 510
+;9 128 addi   ; Should be 137
+;37 12 subi   ; Should be 25
+
+2 2 2 42 3 set
 
 exit
 
@@ -142,6 +144,35 @@ exit
 
 	2 1 ~
 	3 0 ~ 4 ^ 1 $
+
+
+
+; Usage: index copy
+; Copies the word on the stack at "index" to the top of the stack
+#copy
+	3 1 ~ 1 $ 3 addi ; index
+	1 ~
+	2 0 ~ 2 ^ 1 $
+
+
+
+; Usage: value index set
+; Set's a word on the stack (at "index") to "value"
+#set
+	3 copy ; value
+
+	3 copy ; index
+	5 addi
+	1 copy
+
+	0 ! ; Set the value at the given index to all 1s
+	1 copy
+
+	3 ! ; At this point, the stack var is the inverse of what it should be
+	1 subi
+	1 copy
+	!
+	3 0 ~ 4 ^
 
 
 
