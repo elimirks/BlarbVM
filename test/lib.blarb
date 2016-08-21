@@ -3,11 +3,12 @@
 ;0 noti       ; Should be -1 (all ones)
 ;8 4 ori      ; Should be 12
 ;8 12 xori    ; Should be 4
-;255 lshiftil ; Should be 510
+;255 lshiftilone ; Should be 510
 ;9 128 addi   ; Should be 137
 ;37 12 subi   ; Should be 25
+;2 2 2 42 3 seti
 
-2 2 2 42 3 seti
+1 2 lshiftil ; Should be 4
 
 exit
 
@@ -68,22 +69,22 @@ exit
 
 
 
-#lshiftil
+#lshiftilone
 	; Bit mask array (null terminated)
 	0 1 2 4 8 16 32 64 128 256 512 1024 2048 4096 8192 16384 32768 65536
 	131072 262144 524288 1048576 2097152 4194304 8388608 16777216 33554432
 	67108864 134217728 268435456 536870912 1073741824 2147483648 0
 
 	37 1 ~ 1 $ ; Copy of the param
-	lshiftilloop
+	lshiftiloleloop
 
-#lshiftilloop
+#lshiftiloleloop
 	1 ^ ; Pop the return address (hack)
-	3 ? lshiftilrun
+	3 ? lshiftilonerun
 	; At this point, there will just be 0,1,<returnvalue> on the stack
 	2 1 ~
 	5 0 ~ 5 ^ 1 $
-#lshiftilrun
+#lshiftilonerun
 	1 ^ ; Pop the return address (hack)
 
 	;0 1 2 4 .. 128 0 value
@@ -105,7 +106,33 @@ exit
 	; Pop n drop!
 	2 1 ~ 4 ^ 1 $
 
-	lshiftilloop
+	lshiftiloleloop
+
+
+
+; A B lshiftil -> A shifted left be B bits
+#lshiftil
+	3 copy ; A
+
+	; If B is 0, return (base case)
+	3 copy
+	tobooli
+	1 xori
+	1 ? 4 0 ~ 3 1 ~ 5 ^ 1 $
+	1 ^
+
+	; Recursive case - shift and recurse!
+
+	lshiftilone ; Shift A
+
+	; Decrement B
+	3 copy
+	1 subi
+
+	lshiftil
+
+	3 0 ~ 2 1 ~ 4 ^ 1 $
+
 
 
 
@@ -124,7 +151,7 @@ exit
 	5 1 ~ 1 $ ; Copy A and B again
 	5 1 ~ 1 $
 	andi ; carry
-	lshiftil
+	lshiftilone
 
 	addi ; Recurse!
 
