@@ -90,6 +90,12 @@ void BlarbVM_jumpToLabel(BlarbVM *vm, char *line) {
 }
 
 BlarbVM_WORD BlarbVM_parseInt(char **line) {
+	int isNegative = 0;
+	if (**line == '-') {
+		(*line)++;
+		isNegative = 1;
+	}
+
 	// FIXME error handling!
 	char value[16];
 	int i;
@@ -97,7 +103,7 @@ BlarbVM_WORD BlarbVM_parseInt(char **line) {
 		value[i] = **line;
 	}
 	value[i] = '\0';
-	return atoi(value);
+	return isNegative ? - atoi(value) : atoi(value);
 }
 
 void BlarbVM_setRegisterFromStack(BlarbVM *vm) {
@@ -245,7 +251,7 @@ void BlarbVM_executeLine(BlarbVM *vm, char *line) {
 			return;
 		} else if (*it == ';') {
 			return; // Blarb comment
-		} else if (*it >= '0' && *it <= '9') {
+		} else if (*it >= '0' && *it <= '9' || *it == '-') {
 			BlarbVM_WORD value = BlarbVM_parseInt(&it);
 			Stack_push(&vm->stack, value);
 		} else if (*it == '~') {

@@ -27,3 +27,20 @@ To test, run "./blarb test/lib.blarb"
 
 The stack stores a collection of words (32 bits each)
 
+Loop Example
+------------
+
+This code is using functions defined in lib.blarb.
+
+```
+0            ; Start with the number 0 on the stack
+1 addi       ; Increment it
+1 copy       ; Copy it twice (one for comparison, one for the list)
+1 copy       ;
+5 iseqi      ; Check if the number is 5
+1 ? 2 ^ exit ; If it is 5 (1 ? means check the 1st stack index), exit
+1 ^ -6 jumpi ; Otherwise, jump 6 lines back and continue execution (a loop)
+```
+
+The result of the above code is a list of numbers 1-5 on the stack.
+
