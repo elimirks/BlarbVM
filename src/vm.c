@@ -106,6 +106,29 @@ BlarbVM_WORD BlarbVM_parseInt(char **line) {
 	return isNegative ? - atoi(value) : atoi(value);
 }
 
+void BlarbVM_pushStringLiteralToStack(BlarbVM *vm, char **line) {
+	(*line)++; // Ignore the first "
+
+	// FIXME error handling!
+
+	int i;
+	char value[265];
+	for (i = 0; **line != '"'; i++, (*line)++) {
+		// Escape character for quotes, etc.
+		if (**line == '\\') {
+			(*line)++;
+		}
+		value[i] = **line;
+	}
+	Stack_push(&vm->stack, 0);
+	// Push the string on the stack 'backwards'
+	for (i -= 1; i >= 0; i--) {
+		Stack_push(&vm->stack, (BlarbVM_WORD)value[i]);
+	}
+
+	(*line)++; // Ignore the last "
+}
+
 void BlarbVM_setRegisterFromStack(BlarbVM *vm) {
 	BlarbVM_WORD stackIndex = Stack_peek(&vm->stack, 1);
 	BlarbVM_WORD regIndex = Stack_peek(&vm->stack, 0);
@@ -115,6 +138,19 @@ void BlarbVM_setRegisterFromStack(BlarbVM *vm) {
 	// Pop args
 	Stack_pop(&vm->stack);
 	Stack_pop(&vm->stack);
+}
+
+void BlarbVM_includeFileOnStack(BlarbVM *vm) {
+	char fileName[256];
+	size_t size = 0;
+
+	char c;
+	while (c = (char)Stack_pop(&vm->stack)) {
+		fileName[size++] = c;
+	}
+	fileName[size] = '\0';
+
+	BlarbVM_loadFile(vm, fileName);
 }
 
 void BlarbVM_pushRegisterToStack(BlarbVM *vm) {
@@ -184,6 +220,7 @@ void BlarbVM_addLabelPointer(BlarbVM *vm, char *name, int line) {
 void BlarbVM_loadFile(BlarbVM *vm, char *fileName) {
 	FILE *fp = fopen(fileName, "r");
 	if ( ! fp) {
+		fprintf(stderr, "Failed to open '%s'\n", fileName);
 		perror("fopen");
 		terminateVM();
 	}
@@ -266,6 +303,10 @@ void BlarbVM_executeLine(BlarbVM *vm, char *line) {
 			}
 		} else if (*it == '^') {
 			BlarbVM_popOnStack(vm);
+		} else if (*it == '@') {
+			BlarbVM_includeFileOnStack(vm);
+		} else if (*it == '"') {
+			BlarbVM_pushStringLiteralToStack(vm, &it);
 		} else {
 			fprintf(stderr, "Invalid syntax '%c', %d: %s\n", *it, i, line);
 			terminateVM();
