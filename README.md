@@ -8,6 +8,8 @@ Currently supported operations:
 - a ^ pop 'a' elements
 - a ? if index a is true (non-zero), execute the rest of the line
 - "filename.blarb" @ Include the given file 
+- f e d c b a % Execute the system call with the given args
+- a b = Set the memory address at index b to the byte (not word) at index a
 
 Labels are created by:
 

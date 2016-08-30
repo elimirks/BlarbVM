@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-typedef uint32_t BlarbVM_WORD;
+typedef size_t BlarbVM_WORD;
 
 typedef struct ByteList {
 	struct ByteList *next;
@@ -16,6 +16,8 @@ typedef struct LabelPointer {
 } LabelPointer;
 
 typedef struct BlarbVM {
+	void *heap;
+	size_t heapSize;
 	ByteList *stack;
 	BlarbVM_WORD registers[8];
 	char **lines;

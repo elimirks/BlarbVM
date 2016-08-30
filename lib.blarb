@@ -10,6 +10,8 @@
 ;1 2 lshiftil ; Should be 4
 ;3 4 iseqi ; Should be 0
 ;4 3 isgti ; Should be 1
+;4 3 isgti ; Should be 1
+;42 pushbytetoheapi ; The value "42" should be on the heap
 
 exit
 
@@ -240,6 +242,27 @@ exit
 
 
 
+#brki
+	2 copy ; new brk endpoint (or 0)
+	2 1 ~
+	0 0 0 0 1 $ 12 % ; brk it up
+	4 0 ~ 2 1 ~ 4 ^ 1 $
+
+
+
+#pushbytetoheapi
+	; Extend the breakpoint
+	0 brki
+	1 addi
+	brki
+	1 subi
+
+	4 2 = ; Set the heap value to the byte parameter
+
+	3 0 ~ 3 ^
+
+
+
 #exit
-	2147483649 2 0 ~ 2 ^ ; Exit (set the next execute line to a negative number)
+	-2 2 0 ~ 2 ^ ; Exit (set the next execute line to a negative number)
 

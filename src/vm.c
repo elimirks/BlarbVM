@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #include "vm.h"
 #include "main.h"
@@ -153,9 +154,61 @@ void BlarbVM_includeFileOnStack(BlarbVM *vm) {
 	BlarbVM_loadFile(vm, fileName);
 }
 
+size_t BlarbVM_systemCallFromStack(BlarbVM *vm) {
+	BlarbVM_WORD arg[6];
+	arg[0] = Stack_pop(&vm->stack);
+	arg[1] = Stack_pop(&vm->stack);
+	arg[2] = Stack_pop(&vm->stack);
+	arg[3] = Stack_pop(&vm->stack);
+	arg[4] = Stack_pop(&vm->stack);
+	arg[5] = Stack_pop(&vm->stack);
+
+	// Custom BRK to internalize the VM heap
+	if (arg[0] == 12) {
+		size_t newEnd = arg[1];
+
+		if (newEnd) {
+			size_t currentEnd = (size_t)vm->heap + vm->heapSize;
+			// If the break point is before the beggining of the heap (bad)
+			if (newEnd < (size_t)vm->heap) {
+				return currentEnd; // Do nothing (as per linux brk implementation)
+			}
+			// Resize the heap
+			vm->heapSize = newEnd - (size_t)vm->heap;
+
+			if ((vm->heap = realloc(vm->heap, vm->heapSize)) == 0) {
+				perror("realloc");
+				terminateVM();
+			}
+		}
+		return (size_t)(vm->heap) + vm->heapSize;
+	}
+
+	size_t ret;
+	if ((ret = syscall(arg[0], arg[1], arg[2], arg[3], arg[4], arg[5])) == -1) {
+		fprintf(stderr, "Syscall args: %d, %d, %d, %d, %d, %d",
+			arg[0], arg[1], arg[2], arg[3], arg[4], arg[5]);
+		perror("syscall");
+	}
+	return ret;
+}
+
+void BlarbVM_setHeapValueFromStack(BlarbVM *vm) {
+	BlarbVM_WORD heapAddressIndex = Stack_peek(&vm->stack, 0);
+	BlarbVM_WORD valueIndex = Stack_peek(&vm->stack, 1);
+
+	BlarbVM_WORD heapAddress = Stack_peek(&vm->stack, heapAddressIndex);
+	BlarbVM_WORD value = Stack_peek(&vm->stack, valueIndex);
+
+	// Set the value in memory
+	*((char *)heapAddress) = value;
+
+	Stack_pop(&vm->stack);
+	Stack_pop(&vm->stack);
+}
+
 void BlarbVM_pushRegisterToStack(BlarbVM *vm) {
 	BlarbVM_WORD regIndex = Stack_peek(&vm->stack, 0);
-
 	BlarbVM_WORD regValue = vm->registers[regIndex];
 
 	// Pop args
@@ -291,6 +344,8 @@ void BlarbVM_executeLine(BlarbVM *vm, char *line) {
 		} else if (*it >= '0' && *it <= '9' || *it == '-') {
 			BlarbVM_WORD value = BlarbVM_parseInt(&it);
 			Stack_push(&vm->stack, value);
+		} else if (*it == '"') {
+			BlarbVM_pushStringLiteralToStack(vm, &it);
 		} else if (*it == '~') {
 			BlarbVM_setRegisterFromStack(vm);
 		} else if (*it == '$') {
@@ -305,8 +360,11 @@ void BlarbVM_executeLine(BlarbVM *vm, char *line) {
 			BlarbVM_popOnStack(vm);
 		} else if (*it == '@') {
 			BlarbVM_includeFileOnStack(vm);
-		} else if (*it == '"') {
-			BlarbVM_pushStringLiteralToStack(vm, &it);
+		} else if (*it == '%') {
+			BlarbVM_WORD result = BlarbVM_systemCallFromStack(vm);
+			Stack_push(&vm->stack, result);
+		} else if (*it == '=') {
+			BlarbVM_setHeapValueFromStack(vm);
 		} else {
 			fprintf(stderr, "Invalid syntax '%c', %d: %s\n", *it, i, line);
 			terminateVM();
@@ -324,12 +382,6 @@ void BlarbVM_dumpDebug(BlarbVM *vm) {
 
 	printf("\nBeginning BlarbVM dump:\n");
 
-	printf("\nDefined labels:\n");
-	for (i = 0; i < vm->labelPointerCount; i++) {
-		LabelPointer *label = &vm->labelPointers[i];
-		printf("%d: %s\n", label->line, label->name);
-	}
-
 	printf("\nRegisters:\n");
 	for (i = 0; i < sizeof(vm->registers) / sizeof(BlarbVM_WORD); i++) {
 		BlarbVM_WORD value = vm->registers[i];
@@ -342,12 +394,20 @@ void BlarbVM_dumpDebug(BlarbVM *vm) {
 		BlarbVM_WORD value = head->value;
 		printf("%d: %d\n", i, value);
 	}
+
+	printf("\nHeap (%d):\n", vm->heapSize);
+	for (i = 0; i < vm->heapSize; i++) {
+		char byteValue = ((char*)vm->heap)[i];
+		printf("%d: %d\n", (size_t)vm->heap + i, byteValue);
+	}
+
 	printf("\nDump complete.\n\n");
 }
 
 BlarbVM * BlarbVM_init() {
 	BlarbVM *vm = malloc(sizeof(BlarbVM));
 	memset(vm, 0, sizeof(BlarbVM));
+	vm->heap = malloc(1); // Give it some random address to start with
 	return vm;
 }
 

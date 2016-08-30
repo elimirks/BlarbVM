@@ -2,7 +2,7 @@
 
 # Compiler
 CC   = gcc
-OPTS = -std=c99 -pedantic -g
+OPTS = -std=gnu99 -pedantic -g
 
 # Project name
 PROJECT = blarb
