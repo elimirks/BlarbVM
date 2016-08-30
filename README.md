@@ -28,7 +28,7 @@ e.g.
 
 To test, run "./blarb test/lib.blarb"
 
-The stack stores a collection of 32-bit words
+The stack stores a collection of 64-bit words
 
 To include a file, you must push a null terminated string onto the stack.
 Or, you can use a string literal, which will automatically push a

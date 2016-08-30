@@ -98,13 +98,14 @@ BlarbVM_WORD BlarbVM_parseInt(char **line) {
 	}
 
 	// FIXME error handling!
-	char value[16];
+	char value[20]; // Longest 64 bit number
 	int i;
 	for (i = 0; **line >= '0' && **line <= '9'; i++, (*line)++) {
 		value[i] = **line;
 	}
 	value[i] = '\0';
-	return isNegative ? - atoi(value) : atoi(value);
+	BlarbVM_WORD val = strtoull(value, 0, 10);
+	return isNegative ? -val : val;
 }
 
 void BlarbVM_pushStringLiteralToStack(BlarbVM *vm, char **line) {
@@ -392,13 +393,13 @@ void BlarbVM_dumpDebug(BlarbVM *vm) {
 	i = 0;
 	for (ByteList *head = vm->stack; head; head = head->next, i++) {
 		BlarbVM_WORD value = head->value;
-		printf("%d: %d\n", i, value);
+		printf("%d: %lld\n", i, value);
 	}
 
 	printf("\nHeap (%d):\n", vm->heapSize);
 	for (i = 0; i < vm->heapSize; i++) {
 		char byteValue = ((char*)vm->heap)[i];
-		printf("%d: %d\n", (size_t)vm->heap + i, byteValue);
+		printf("%d: %lld\n", (size_t)vm->heap + i, byteValue);
 	}
 
 	printf("\nDump complete.\n\n");
