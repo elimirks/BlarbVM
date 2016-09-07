@@ -14,10 +14,13 @@
 ;42 pushbytetoheapi ; The value "42" should be on the heap
 ;"hello" 1 stackstrlen ; Should return 5
 
-; Prints hello world!!!!!!!
-"Hello, world!" 2 13 copybytearraytoheap
-2 1 ~ 15 ^ ; Pop everything off and store the heap address in register 1
-0 0 13 1 $ 1 1 %
+"Hello, world!" printline
+"Blarb." printline
+
+;"Hello, world!" 2 13 print
+;10 2 1 print
+;"Blarb." 2 6 print
+;10 2 1 print
 
 exit
 
@@ -310,7 +313,7 @@ exit
 ; A B copyarraytoheap
 ; Copy array of length B at index A to the heap
 ; Returns the initial array index breakpoint
-#copybytearraytoheap
+#pushbytearraytoheap
 	0 brki
 	3 copy ; The length of the array (B)
 	addi
@@ -325,19 +328,19 @@ exit
 
 	1 copy ; A following pointer (for byte copying)
 
-	copybytearraytoheaploop
-#copybytearraytoheaploop
+	pushbytearraytoheaploop
+#pushbytearraytoheaploop
 	1 ^
 
 	; On the stack at this point, just the initial breakpoint.
 	; If B is non-zero, copy the next pointer byte and loop again
-	4 ? copybytearraytoheaprun
+	4 ? pushbytearraytoheaprun
 	
 	; If B is 0, terminate and return the initial breakpoint.
 	3 1 ~
 	4 0 ~ 5 ^ 1 $
 
-#copybytearraytoheaprun
+#pushbytearraytoheaprun
 	1 ^
 
 	5 copy ; A
@@ -356,7 +359,49 @@ exit
 	1 subi
 	5 seti
 
-	copybytearraytoheaploop
+	pushbytearraytoheaploop
+
+
+
+; Prints the array at the given index
+; A B print - Prints the array at index A of length B
+#print
+	3 copy ; Index
+	3 addi
+	3 copy ; Length
+	pushbytearraytoheap ; Replaces index and length with a heap pointer
+
+	3 copy
+
+	; Length in reg 1 and pointer in reg 2
+	2 1 ~ 3 2 ~
+
+	; Print from the heap
+	0 0 1 $ 2 $ 1 1 %
+
+	3 copy ; Pointer to the beginning of the string (on the heap)
+	brki ; Deallocate the string, now that we are done printing.
+
+	6 0 ~ 7 ^
+
+
+
+; Shortcut to print a line (with a newline) and pop the string
+; "str" printline - Prints the null terminated <str>
+#printline
+	2 stackstrlen
+	4
+	2 copy
+	print
+
+	; Print a newline
+	10 2 1 print
+	1 ^
+
+	; Pop the length of the string, plus stack vars, plus null byte
+	3 addi
+	2 1 ~
+	3 0 ~ 1 $ ^
 
 
 

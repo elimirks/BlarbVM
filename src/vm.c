@@ -176,11 +176,7 @@ size_t BlarbVM_systemCallFromStack(BlarbVM *vm) {
 			}
 			// Resize the heap
 			vm->heapSize = newEnd - (size_t)vm->heap;
-
-			if ((vm->heap = realloc(vm->heap, vm->heapSize)) == 0) {
-				perror("realloc");
-				terminateVM();
-			}
+			vm->heap = realloc(vm->heap, vm->heapSize);
 		}
 		return (size_t)(vm->heap) + vm->heapSize;
 	}
@@ -381,28 +377,28 @@ void BlarbVM_executeLine(BlarbVM *vm, char *line) {
 void BlarbVM_dumpDebug(BlarbVM *vm) {
 	int i;
 
-	printf("\nBeginning BlarbVM dump:\n");
+	fprintf(stderr, "\nBeginning BlarbVM dump:\n");
 
-	printf("\nRegisters:\n");
+	fprintf(stderr, "\nRegisters:\n");
 	for (i = 0; i < sizeof(vm->registers) / sizeof(BlarbVM_WORD); i++) {
 		BlarbVM_WORD value = vm->registers[i];
-		printf("%d: %d \n", i, value);
+		fprintf(stderr, "%d: %d \n", i, value);
 	}
-	printf("\nStack:\n");
+	fprintf(stderr, "\nStack:\n");
 
 	i = 0;
 	for (ByteList *head = vm->stack; head; head = head->next, i++) {
 		BlarbVM_WORD value = head->value;
-		printf("%d: %lld\n", i, value);
+		fprintf(stderr, "%d: %lld\n", i, value);
 	}
 
-	printf("\nHeap (%d):\n", vm->heapSize);
+	fprintf(stderr, "\nHeap (%d):\n", vm->heapSize);
 	for (i = 0; i < vm->heapSize; i++) {
 		char byteValue = ((char*)vm->heap)[i];
-		printf("%d: %lld\n", (size_t)vm->heap + i, byteValue);
+		fprintf(stderr, "%d: %lld\n", (size_t)vm->heap + i, byteValue);
 	}
 
-	printf("\nDump complete.\n\n");
+	fprintf(stderr, "\nDump complete.\n\n");
 }
 
 BlarbVM * BlarbVM_init() {
