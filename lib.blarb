@@ -14,13 +14,19 @@
 ;42 pushbytetoheapi ; The value "42" should be on the heap
 ;"hello" 1 stackstrlen ; Should return 5
 
-"Hello, world!" printline
-"Blarb." printline
+;"Hello, world!" printline
+;"Blarb." printline
 
 ;"Hello, world!" 2 13 print
 ;10 2 1 print
 ;"Blarb." 2 6 print
 ;10 2 1 print
+
+;"Hello, world!" printline
+;"hello" 1 pushstringtoheap
+
+;"test.txt" 0 0 openwithname
+;closedescriptor
 
 exit
 
@@ -245,7 +251,7 @@ exit
 	3 copy ; A
 	3 copy ; B
 	subi ; A - B
-	2147483648 ; The highest bit
+	2147483648 ; The highest bit FIXME change this for 64 bits
 	andi
 	1 ? 3 0 ~ 4 ^ 0 ; A > B
 	3 0 ~ 4 ^ 1 ; A <= B
@@ -363,6 +369,29 @@ exit
 
 
 
+; Pushes the string at the given stack index to the heap (no null byte)
+; Returns the heap memory address
+#pushstringtoheap
+	2 copy
+	2 addi ; Offset the index because of the local vars
+	stackstrlen
+	; The index, again
+	3 copy
+	3 addi
+
+	; Swap the stack vars, since the stack index is on the top now
+	2 1 ~ 3 2 ~ 2 ^ 1 $ 2 $
+
+	; At this point, INDEX and SIZE should be on the stack
+
+	pushbytearraytoheap
+
+	; Now it's just the heap address - so we return that
+	1 2 ~
+	3 0 ~ 3 ^ 1 $
+
+
+
 ; Prints the array at the given index
 ; A B print - Prints the array at index A of length B
 #print
@@ -402,6 +431,41 @@ exit
 	3 addi
 	2 1 ~
 	3 0 ~ 1 $ ^
+
+
+
+; Open a file and return a descriptor number
+; e.g. "test.txt" FLAGS MODE openwithname
+; mode 0 is read only (see Linux "open" syscall docs)
+#openwithname
+	4 pushstringtoheap
+	0 pushbytetoheapi ; the open syscall needs a null termination
+
+	2 1 ~ ; name
+	5 2 ~ ; flags
+	4 3 ~ ; mode
+	; Now we have a pointer to that string on the stack
+	0 0 3 $ 2 $ 1 $ 2 %
+
+	2 copy ; Pointer to the beginning of the string (on the heap)
+	brki   ; Deallocate the string, now that we are done printing.
+
+	; Figure out the string length and pop em' all!
+	7 stackstrlen
+	7 addi
+
+	4 2 ~ ; Store the file descriptor value, so we can return it
+	6 0 ~ ^ 2 $
+
+
+
+; Close the give descriptor
+; Returns nothing (but really... we should return a status)
+#closedescriptor
+	3 1 ~ ; Store the descriptor number for sanity
+	0 0 0 0 1 $ 3 %
+	; Note: The syscall operater returns a status - we assume it works :)
+	3 0 ~ 3 ^
 
 
 
