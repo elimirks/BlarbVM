@@ -1,6 +1,6 @@
 # Compiler
 CC   = gcc
-OPTS = -std=c11 -pedantic -g -O3
+OPTS = -std=gnu11 -pedantic -g -O3
 
 # Project name
 PROJECT = blarb

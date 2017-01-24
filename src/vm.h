@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 #include <stddef.h>
-#include "scanner.h"
 
 typedef size_t BlarbVM_WORD;
 
@@ -82,6 +81,5 @@ void BlarbVM_loadFile(BlarbVM *vm, char *fileName);
  * @param line The line to add - will be free'd in BlarbVM_destroy
  */
 void BlarbVM_addLine(BlarbVM *vm, token *line);
-
 #endif
 

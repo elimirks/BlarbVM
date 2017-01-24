@@ -1,7 +1,24 @@
+#include <stdint.h>
+
 #include "main.h"
 #include "vm.h"
-#include "scanner.h"
 #include "../obj/blarb.yy.c"
+
+void BlarbVM_addLabelPointer(BlarbVM *vm, char *name, int line) {
+	if (vm->labelPointerCount % 2 == 0) {
+		// Double the size when space runs out - amortized time is O(1)
+		vm->labelPointers = vm->labelPointerCount == 0
+			? malloc(sizeof(LabelPointer) * 2)
+			: realloc(vm->labelPointers, sizeof(LabelPointer) * vm->labelPointerCount * 2);
+	}
+
+	LabelPointer *newLabel = &vm->labelPointers[vm->labelPointerCount];
+	newLabel->name = malloc(sizeof(char) * strlen(name));
+	strcpy(newLabel->name, name);
+	newLabel->line = line;
+
+	vm->labelPointerCount++;
+}
 
 // Scans a line of tokens using yylex
 token* BlarbVM_scanLine(BlarbVM *vm) {
@@ -31,10 +48,10 @@ token* BlarbVM_scanLine(BlarbVM *vm) {
             BlarbVM_addLabelPointer(vm, text, vm->lineCount);
         } else if (tokenType == STR) {
             char *text = (char*)yytext + 1; // Exclude quotes
-            int len = strlen(yytext) - 1; // ^^
+            int len = strlen(yytext) - 2; // ^^
             line[tokenCount - 1].str = malloc(len + 1);
             line[tokenCount - 1].str[len] = '\0';
-            strncpy(line[tokenCount - 1].str, yytext, len);
+            strncpy(line[tokenCount - 1].str, text, len);
         } else if (tokenType == NEWLINE) {
             break;
         }
@@ -66,22 +83,6 @@ void BlarbVM_loadFile(BlarbVM *vm, char *fileName) {
 
     yyin = stdin;
 	fclose(fp);
-}
-
-void BlarbVM_addLabelPointer(BlarbVM *vm, char *name, int line) {
-	if (vm->labelPointerCount % 2 == 0) {
-		// Double the size when space runs out - amortized time is O(1)
-		vm->labelPointers = vm->labelPointerCount == 0
-			? malloc(sizeof(LabelPointer) * 2)
-			: realloc(vm->labelPointers, sizeof(LabelPointer) * vm->labelPointerCount * 2);
-	}
-
-	LabelPointer *newLabel = &vm->labelPointers[vm->labelPointerCount];
-	newLabel->name = malloc(sizeof(char) * strlen(name));
-	strcpy(newLabel->name, name);
-	newLabel->line = line;
-
-	vm->labelPointerCount++;
 }
 
 void BlarbVM_addLine(BlarbVM *vm, token *line) {

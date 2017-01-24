@@ -1,18 +1,17 @@
 %{
     /* BlarbVM Lexer */
-    #include "../src/scanner.h"
+    #include "../src/vm.h"
 %}
 
 %option noyywrap
-%x checkComments
 
 %{ 
     /* REGEX Variable Initialization */ 
 %}
 ws            [ ]|[\t]
 integers      -?[0-9]+
-str           \"(\\.|[^"])*\"
-identifiers   (([a-zA-Z_])([a-zA-Z0-9_])*)
+str           \"(\\.|[^\"])*\"
+identifiers   ([a-zA-Z_])([a-zA-Z0-9_])*
 label         "#"{identifiers}
 function_call {identifiers}
 newline       [\n]|[\r\n]|[\r]

@@ -71,22 +71,14 @@ BlarbVM_WORD Stack_peek(ByteList **stack, BlarbVM_WORD index) {
 // Also pushes the current line to the stack
 // Implicit: "0 $ #labelName 0 2 ~ 1 ^"
 void BlarbVM_jumpToLabel(BlarbVM *vm, char *line) {
-	char name[256];
-	int i;
-
-	for (i = 0; line[i] >= 'a' && line[i] <= 'z'; i++) {
-		name[i] = line[i];
-	}
-	name[i] = '\0';
-
-	for (i = 0; i < vm->labelPointerCount; i++) {
-		if (strcmp(vm->labelPointers[i].name, name) == 0) {
+	for (int i = 0; i < vm->labelPointerCount; i++) {
+		if (strcmp(vm->labelPointers[i].name, line) == 0) {
 			Stack_push(&vm->stack, vm->registers[0]); // return address
 			vm->registers[0] = vm->labelPointers[i].line;
 			return;
 		}
 	}
-	fprintf(stderr, "Label not found: %s\n", name);
+	fprintf(stderr, "Label not found: %s\n", line);
 	terminateVM();
 }
 
@@ -108,27 +100,12 @@ BlarbVM_WORD BlarbVM_parseInt(char **line) {
 	return isNegative ? -val : val;
 }
 
-void BlarbVM_pushStringLiteralToStack(BlarbVM *vm, char **line) {
-	(*line)++; // Ignore the first "
-
-	// FIXME error handling!
-
-	int i;
-	char value[265];
-	for (i = 0; **line != '"'; i++, (*line)++) {
-		// Escape character for quotes, etc.
-		if (**line == '\\') {
-			(*line)++;
-		}
-		value[i] = **line;
-	}
+void BlarbVM_pushStringLiteralToStack(BlarbVM *vm, char *line) {
 	Stack_push(&vm->stack, 0);
 	// Push the string on the stack 'backwards'
-	for (i -= 1; i >= 0; i--) {
-		Stack_push(&vm->stack, (BlarbVM_WORD)value[i]);
+	for (int i = strlen(line); i >= 0; i--) {
+		Stack_push(&vm->stack, (BlarbVM_WORD)line[i]);
 	}
-
-	(*line)++; // Ignore the last "
 }
 
 void BlarbVM_setRegisterFromStack(BlarbVM *vm) {
@@ -251,66 +228,58 @@ void BlarbVM_popOnStack(BlarbVM *vm) {
 	}
 }
 
+// TODO: Make this parse tokens instead! Be smart!
+void BlarbVM_executeLine(BlarbVM *vm, token *line) {
+    while (line->type != NEWLINE) {
+        switch (line->type) {
+        case INTEGER:
+            Stack_push(&vm->stack, line->val);
+            break;
+        case FUNCTION_CALL:
+			BlarbVM_jumpToLabel(vm, line->str);
+            break;
+        case STR:
+            BlarbVM_pushStringLiteralToStack(vm, line->str);
+            break;
+        case INCLUDE:
+			BlarbVM_includeFileOnStack(vm);
+            break;
+        case REG_STORE:
+			BlarbVM_setRegisterFromStack(vm);
+            break;
+        case REG_GET:
+			BlarbVM_pushRegisterToStack(vm);
+            break;
+        case STACK_POP:
+			BlarbVM_popOnStack(vm);
+            break;
+        case NAND:
+			BlarbVM_nandOnStack(vm);
+            break;
+        case CONDITION:
+			if ( ! BlarbVM_conditionalFromStack(vm)) {
+				return;
+			}
+            break;
+        case SYS_CALL:
+            {
+                BlarbVM_WORD result = BlarbVM_systemCallFromStack(vm);
+                Stack_push(&vm->stack, result);
+            }
+            break;
+        case MEM_SET:
+			BlarbVM_setHeapValueFromStack(vm);
+            break;
+        }
+        line++;
+    }
+}
+
 void BlarbVM_execute(BlarbVM *vm) {
 	BlarbVM_WORD *lineToExecute = &(vm->registers[0]); // line pointer
 	while (*lineToExecute < vm->lineCount && *lineToExecute >= 0) {
 		BlarbVM_executeLine(vm, vm->lines[*lineToExecute]);
 		(*lineToExecute)++;
-	}
-}
-
-// TODO: Make this parse tokens instead! Be smart!
-void BlarbVM_executeLine(BlarbVM *vm, char *line) {
-	// Don't run labels!
-	if (line && strlen(line) > 0 && line[0] == '#') {
-		return;
-	}
-
-	int i;
-	char *it = line;
-
-	// TODO make sure there is whitespace surrounding native ops!
-
-	while (*it) {
-		if (*it <= ' ' || *it == '\t') {
-		} else if (*it >= 'a' && *it <= 'z') {
-			BlarbVM_jumpToLabel(vm, it);
-			return;
-		} else if (*it == ';') {
-			return; // Blarb comment
-		} else if (*it >= '0' && *it <= '9' || *it == '-') {
-			BlarbVM_WORD value = BlarbVM_parseInt(&it);
-			Stack_push(&vm->stack, value);
-		} else if (*it == '"') {
-			BlarbVM_pushStringLiteralToStack(vm, &it);
-		} else if (*it == '~') {
-			BlarbVM_setRegisterFromStack(vm);
-		} else if (*it == '$') {
-			BlarbVM_pushRegisterToStack(vm);
-		} else if (*it == '!') {
-			BlarbVM_nandOnStack(vm);
-		} else if (*it == '?') {
-			if ( ! BlarbVM_conditionalFromStack(vm)) {
-				return;
-			}
-		} else if (*it == '^') {
-			BlarbVM_popOnStack(vm);
-		} else if (*it == '@') {
-			BlarbVM_includeFileOnStack(vm);
-		} else if (*it == '%') {
-			BlarbVM_WORD result = BlarbVM_systemCallFromStack(vm);
-			Stack_push(&vm->stack, result);
-		} else if (*it == '=') {
-			BlarbVM_setHeapValueFromStack(vm);
-		} else {
-			fprintf(stderr, "Invalid syntax '%c', %d: %s\n", *it, i, line);
-			terminateVM();
-		}
-
-		if (*it) {
-			it++;
-			i++;
-		}
 	}
 }
 
