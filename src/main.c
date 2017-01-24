@@ -13,6 +13,7 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
+    /*
 	vm = BlarbVM_init();
 
 	BlarbVM_loadFile(vm, argv[1]);
@@ -20,6 +21,7 @@ int main(int argc, char **argv) {
 
 	BlarbVM_dumpDebug(vm);
 	BlarbVM_destroy(vm);
+    */
 
 	return 0;
 }

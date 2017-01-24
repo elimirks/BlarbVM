@@ -2,8 +2,37 @@
 #define __DATA_STRUCTURES_H__
 
 #include <stdint.h>
+#include <stddef.h>
+#include "scanner.h"
 
 typedef size_t BlarbVM_WORD;
+
+// Token types
+typedef enum {
+    // Note: There are no strings, since they are parsed while scanning
+    INTEGER = 1,
+    FUNCTION_CALL,
+    LABEL,
+    INCLUDE,
+    REG_STORE,
+    REG_GET,
+    STACK_POP,
+    NAND,
+    CONDITION,
+    SYS_CALL,
+    MEM_SET,
+    // These symbols get abstracted to the parser
+    NEWLINE,
+    STR,
+} token_t;
+
+typedef struct token {
+    token_t type;
+    union {
+        BlarbVM_WORD val;
+        char *str;
+    };
+} token;
 
 typedef struct ByteList {
 	struct ByteList *next;
@@ -20,7 +49,7 @@ typedef struct BlarbVM {
 	size_t heapSize;
 	ByteList *stack;
 	BlarbVM_WORD registers[8];
-	char **lines;
+	token **lines;
 	int lineCount;
 	LabelPointer *labelPointers;
 	int labelPointerCount;
@@ -30,17 +59,7 @@ void Stack_push(ByteList **stack, BlarbVM_WORD value);
 BlarbVM_WORD Stack_pop(ByteList **stack);
 BlarbVM_WORD Stack_printDebug(ByteList **stack);
 
-void BlarbVM_loadFile(BlarbVM *vm, char *fileName);
-
-/**
- * @param line The line to add - will be free'd in BlarbVM_destroy
- */
-void BlarbVM_addLine(BlarbVM *vm, char *line);
 void BlarbVM_execute(BlarbVM *vm);
-// Outside VM code, this is used for debugging (script injection)
-void BlarbVM_executeLine(BlarbVM *vm, char *line);
-
-void BlarbVM_addFile(BlarbVM *vm, char *name, FILE *file);
 
 /**
  * Dump a VM trace.
@@ -56,6 +75,13 @@ BlarbVM * BlarbVM_init();
  * Destroy an existing VM.
  */
 void BlarbVM_destroy(BlarbVM *vm);
+
+void BlarbVM_loadFile(BlarbVM *vm, char *fileName);
+
+/**
+ * @param line The line to add - will be free'd in BlarbVM_destroy
+ */
+void BlarbVM_addLine(BlarbVM *vm, token *line);
 
 #endif
 
