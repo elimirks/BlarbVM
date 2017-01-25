@@ -75,6 +75,7 @@ void BlarbVM_loadFile(BlarbVM *vm, char *fileName) {
 		terminateVM();
 	}
     yyin = fp;
+    yyfilename = fileName;
 
 	token *line;
     while ((line = BlarbVM_scanLine(vm))) {

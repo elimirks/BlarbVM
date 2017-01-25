@@ -1,8 +1,10 @@
 %{
     /* BlarbVM Lexer */
     #include "../src/vm.h"
+    char *yyfilename; // Set in scanner.c
 %}
 
+%option yylineno
 %option noyywrap
 
 %{ 
@@ -36,5 +38,5 @@ comment       ;.*$
 
 {comment} {}
 {ws} {}
-. {fprintf(stderr, "ERROR DETECTED '%s' on line %d\n", yytext, yylineno); return 0;}
-
+. {fprintf(stderr, "Invalid token: '%s' on line %d in %s\n",
+           yytext, yylineno, yyfilename); exit(1);}
