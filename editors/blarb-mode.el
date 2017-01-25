@@ -9,3 +9,5 @@
   nil                               ;; other functions to call
   "A mode for blarb files"          ;; doc string for this mode
   )
+
+(provide 'blarb-mode)
