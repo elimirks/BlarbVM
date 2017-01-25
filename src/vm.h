@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include "uthash.h"
 
 typedef size_t BlarbVM_WORD;
 
@@ -39,8 +40,9 @@ typedef struct ByteList {
 } ByteList;
 
 typedef struct LabelPointer {
-	char *name;
+	char name[64];
 	int line;
+    UT_hash_handle hh;
 } LabelPointer;
 
 typedef struct BlarbVM {
@@ -51,7 +53,6 @@ typedef struct BlarbVM {
 	token **lines;
 	int lineCount;
 	LabelPointer *labelPointers;
-	int labelPointerCount;
 } BlarbVM;
 
 void Stack_push(ByteList **stack, BlarbVM_WORD value);

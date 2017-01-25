@@ -70,16 +70,17 @@ BlarbVM_WORD Stack_peek(ByteList **stack, BlarbVM_WORD index) {
 // Sets the line pointer register to the line of the given label
 // Also pushes the current line to the stack
 // Implicit: "0 $ #labelName 0 2 ~ 1 ^"
-void BlarbVM_jumpToLabel(BlarbVM *vm, char *line) {
-	for (int i = 0; i < vm->labelPointerCount; i++) {
-		if (strcmp(vm->labelPointers[i].name, line) == 0) {
-			Stack_push(&vm->stack, vm->registers[0]); // return address
-			vm->registers[0] = vm->labelPointers[i].line;
-			return;
-		}
-	}
-	fprintf(stderr, "Label not found: %s\n", line);
-	terminateVM();
+void BlarbVM_jumpToLabel(BlarbVM *vm, char *name) {
+    LabelPointer *lab;
+    HASH_FIND_STR(vm->labelPointers, name, lab);
+
+    if (lab) {
+        Stack_push(&vm->stack, vm->registers[0]); // return address
+        vm->registers[0] = lab->line;
+    } else  {
+        fprintf(stderr, "Label not found: %s\n", name);
+        terminateVM();
+    }
 }
 
 BlarbVM_WORD BlarbVM_parseInt(char **line) {
@@ -327,9 +328,10 @@ void BlarbVM_destroy(BlarbVM *vm) {
 	}
 	free(vm->lines);
 
-	for (int i = 0; i < vm->labelPointerCount; i++) {
-		free(vm->labelPointers[i].name);
-	}
-	free(vm->labelPointers);
+    LabelPointer *current, *tmp; // tmp is needed in uthash
+    HASH_ITER(hh, vm->labelPointers, current, tmp) {
+        HASH_DEL(vm->labelPointers, current);
+        free(current);
+    }
 }
 

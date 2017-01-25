@@ -5,19 +5,10 @@
 #include "../obj/blarb.yy.c"
 
 void BlarbVM_addLabelPointer(BlarbVM *vm, char *name, int line) {
-	if (vm->labelPointerCount % 2 == 0) {
-		// Double the size when space runs out - amortized time is O(1)
-		vm->labelPointers = vm->labelPointerCount == 0
-			? malloc(sizeof(LabelPointer) * 2)
-			: realloc(vm->labelPointers, sizeof(LabelPointer) * vm->labelPointerCount * 2);
-	}
-
-	LabelPointer *newLabel = &vm->labelPointers[vm->labelPointerCount];
-	newLabel->name = malloc(sizeof(char) * strlen(name));
-	strcpy(newLabel->name, name);
-	newLabel->line = line;
-
-	vm->labelPointerCount++;
+    LabelPointer *newLabel = malloc(sizeof(LabelPointer));
+    strncpy(newLabel->name, name, sizeof(newLabel->name));
+    newLabel->line = line;
+    HASH_ADD_STR(vm->labelPointers, name, newLabel);
 }
 
 // Scans a line of tokens using yylex
