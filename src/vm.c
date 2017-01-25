@@ -83,24 +83,6 @@ void BlarbVM_jumpToLabel(BlarbVM *vm, char *name) {
     }
 }
 
-BlarbVM_WORD BlarbVM_parseInt(char **line) {
-	int isNegative = 0;
-	if (**line == '-') {
-		(*line)++;
-		isNegative = 1;
-	}
-
-	// FIXME error handling!
-	char value[20]; // Longest 64 bit number
-	int i;
-	for (i = 0; **line >= '0' && **line <= '9'; i++, (*line)++) {
-		value[i] = **line;
-	}
-	value[i] = '\0';
-	BlarbVM_WORD val = strtoull(value, 0, 10);
-	return isNegative ? -val : val;
-}
-
 void BlarbVM_pushStringLiteralToStack(BlarbVM *vm, char *line) {
 	Stack_push(&vm->stack, 0);
 	// Push the string on the stack 'backwards'
@@ -229,7 +211,6 @@ void BlarbVM_popOnStack(BlarbVM *vm) {
 	}
 }
 
-// TODO: Make this parse tokens instead! Be smart!
 void BlarbVM_executeLine(BlarbVM *vm, token *line) {
     while (line->type != NEWLINE) {
         switch (line->type) {

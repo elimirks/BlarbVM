@@ -5,8 +5,7 @@
 #include "main.h"
 #include "vm.h"
 
-// Sorry for making this a global... it made the terminateVM function simpler :]
-BlarbVM *vm;
+static BlarbVM *vm;
 
 void abortWithUsage(char *arg0) {
     fprintf(stderr, "Usage: %s [--debug] path/to/code.blarb\n", arg0);
@@ -16,7 +15,7 @@ void abortWithUsage(char *arg0) {
 int main(int argc, char **argv) {
     int debug = 0;
 
-    char *fileName = 0;
+    char *fileName = NULL;
     // Possibly load multiple files
     for (int i = 1; i < argc; i++) {
         if (strncmp(argv[i], "--debug", 7) == 0) {

@@ -11,6 +11,12 @@ void BlarbVM_addLabelPointer(BlarbVM *vm, char *name, int line) {
     HASH_ADD_STR(vm->labelPointers, name, newLabel);
 }
 
+void addStringToToken(token *t, char *str, size_t len) {
+    t->str = malloc(len + 1);
+    t->str[len] = '\0';
+    strncpy(t->str, str, len);
+}
+
 // Scans a line of tokens using yylex
 token* BlarbVM_scanLine(BlarbVM *vm) {
     int tokenCount = 0;
@@ -19,30 +25,21 @@ token* BlarbVM_scanLine(BlarbVM *vm) {
     token_t tokenType;
 
     while ((tokenType = yylex())) {
+        token *t = &line[tokenCount++];
         // In general, we just care about the type.
-        line[tokenCount++].type = tokenType;
+        t->type = tokenType;
 
         if (tokenType == INTEGER) {
-            line[tokenCount - 1].val = strtoull(yytext, 0, 10);
+            t->val = strtoull(yytext, 0, 10);
         } else if (tokenType == FUNCTION_CALL) {
-            int len = strlen(yytext);
-            line[tokenCount - 1].str = malloc(len + 1);
-            line[tokenCount - 1].str[len] = '\0';
-            strncpy(line[tokenCount - 1].str, yytext, len);
+            addStringToToken(t, yytext, strlen(yytext));
         } else if (tokenType == LABEL) {
-            char *text = (char*)yytext + 1; // Exclude the hash
-            int len = strlen(text);
-            line[tokenCount - 1].str = malloc(len + 1);
-            line[tokenCount - 1].str[len] = '\0';
-            strncpy(line[tokenCount - 1].str, text, len);
-
-            BlarbVM_addLabelPointer(vm, text, vm->lineCount);
+            // Exclude the hash
+            addStringToToken(t, yytext + 1, strlen(yytext) - 1);
+            BlarbVM_addLabelPointer(vm, t->str, vm->lineCount);
         } else if (tokenType == STR) {
-            char *text = (char*)yytext + 1; // Exclude quotes
-            int len = strlen(yytext) - 2; // ^^
-            line[tokenCount - 1].str = malloc(len + 1);
-            line[tokenCount - 1].str[len] = '\0';
-            strncpy(line[tokenCount - 1].str, text, len);
+            // Exclude quotes
+            addStringToToken(t, yytext + 1, strlen(yytext) - 2);
         } else if (tokenType == NEWLINE) {
             break;
         }
