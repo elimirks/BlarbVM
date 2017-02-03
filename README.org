@@ -1,5 +1,19 @@
-BlarbVM
-=======
+* BlarbVM
+
+BlarbLang is an assembly-like, stack & register based language. Every stack element is a 64-bit word.
+
+** Registers
+   There are 8 registers, numbered 0-7. The 0th register is the line pointer - that is, the line that is currently being evaluated. Registers 1-3 are short term registers, that may change when you call a function or jump to a label. Registers 4-7 are guaranteed to _never_ be used in lib.blarb (which I'll explain later), so you can use them for long term storage in your userspace programs.
+
+|------------+---------------------|
+| Register # | Description         |
+|------------+---------------------|
+|          0 | Line Pointer        |
+|        1-3 | Temporary Registers |
+|        4-7 | User Registers      |
+|------------+---------------------|
+
+** Operations
 
 Currently supported operations:
 - a b ~ Store the value of a in register b
@@ -13,18 +27,18 @@ Currently supported operations:
 
 Labels are created by:
 
-```
-#labelname (optional comments - after the space everything is ignored)
-```
+#+begin_src blarb
+#labelname
+#+end_src
 and called by simply writing their name.
 
 e.g.
-```
+#+begin_src blarb
 3 copyi
 
-#copyi Copy immediate
+#copyi ; Copy immediate
 	; ... do stuff
-```
+#+end_src
 
 To test, run "./blarb test/lib.blarb"
 
@@ -35,12 +49,11 @@ Or, you can use a string literal, which will automatically push a
 "backwards", null-terminated sequence of characters onto the stack.
 To escape a quotation, use "\"". To escape backslashes, use "\\"
 
-Loop Example
-------------
+* Loop Example
 
 This code is using functions defined in lib.blarb.
 
-```
+#+begin_src blarb
 "lib.blarb" @ ; Include the library, which has nice functions (as used below)
 
 0            ; Start with the number 0 on the stack
@@ -52,7 +65,6 @@ This code is using functions defined in lib.blarb.
 1 ^ -6 jumpi ; Otherwise, jump 6 lines back and continue execution (a loop)
 
 exit
-```
+#+end_src
 
 The result of the above code is a list of numbers 1-5 on the stack.
-
