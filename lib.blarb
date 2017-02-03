@@ -103,14 +103,13 @@ exit
 	69 1 ~ 1 $ ; Copy of the param
 	lshiftiloleloop
 
-#lshiftiloleloop
-	1 ^ ; Pop the return address (hack)
+    #lshiftiloleloop 1^
 	3 ? lshiftilonerun
 	; At this point, there will just be 0,1,<returnvalue> on the stack
 	2 1 ~
 	5 0 ~ 5 ^ 1 $
-#lshiftilonerun
-	1 ^ ; Pop the return address (hack)
+
+    #lshiftilonerun 1^
 
 	;0 1 2 4 .. 128 0 value
 
@@ -291,8 +290,7 @@ exit
 	3 addi ; Offset from the return address
 
 	stackstrlenloop
-#stackstrlenloop
-	1 ^
+    #stackstrlenloop 1^
 
 	; If the value at the pointer is null, return!
 	1 copy
@@ -308,8 +306,7 @@ exit
 	2 1 ~
 	3 0 ~ 3 ^ 1 $
 
-#stackstrlenrun
-	1 ^
+    #stackstrlenrun 1^
 	; Increment the string pointer
 	1 addi
 	stackstrlenloop
@@ -335,8 +332,7 @@ exit
 	1 copy ; A following pointer (for byte copying)
 
 	pushbytearraytoheaploop
-#pushbytearraytoheaploop
-	1 ^
+    #pushbytearraytoheaploop 1^
 
 	; On the stack at this point, just the initial breakpoint.
 	; If B is non-zero, copy the next pointer byte and loop again
@@ -346,8 +342,7 @@ exit
 	3 1 ~
 	4 0 ~ 5 ^ 1 $
 
-#pushbytearraytoheaprun
-	1 ^
+    #pushbytearraytoheaprun 1^
 
 	5 copy ; A
 	5 addi ; Stack offset from this function

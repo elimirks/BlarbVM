@@ -76,7 +76,8 @@ void BlarbVM_jumpToLabel(BlarbVM *vm, char *name) {
 
     if (lab) {
         Stack_push(&vm->stack, vm->registers[0]); // return address
-        vm->registers[0] = lab->line;
+        // -1 b.c. the line pointer increments
+        vm->registers[0] = lab->line - 1;
     } else  {
         fprintf(stderr, "Label not found: %s\n", name);
         terminateVM();
@@ -219,7 +220,8 @@ void BlarbVM_executeLine(BlarbVM *vm, token *line) {
             break;
         case FUNCTION_CALL:
 			BlarbVM_jumpToLabel(vm, line->str);
-            break;
+            // Returning b.c. it should ignore all other tokens on this line
+            return;
         case STR:
             BlarbVM_pushStringLiteralToStack(vm, line->str);
             break;
