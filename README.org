@@ -1,7 +1,8 @@
 * BlarbVM
+Blarb is designed to be the simplest possible systems programming language. Being as such, there is only one logical operator: NAND. It is an assembly-like, stack & register based language.
 
-BlarbLang is an assembly-like, stack & register based language. Every stack element is a 64-bit word.
-
+** Architecture
+   In Blarb, there is a stack, heap, and [[Registers][registers]]. On the stack, every element is a 64-bit integer. To access the heap, you must use the [[System Calls][brk system call]].
 ** Registers
    There are 8 registers, numbered 0-7. The 0th register is the line pointer - that is, the line that is currently being evaluated. Registers 1-3 are short term registers, that may change when you call a function or jump to a label. Registers 4-7 are guaranteed to _never_ be used in lib.blarb (which I'll explain later), so you can use them for long term storage in your userspace programs.
 
@@ -13,58 +14,127 @@ BlarbLang is an assembly-like, stack & register based language. Every stack elem
 |        4-7 | User Registers      |
 |------------+---------------------|
 
+** Literals
+   There are only two types of type literals in blarb:
+*** Integers
+    64-bit singed integers - can be negative.
+*** Strings
+    In Blarb, a string is simply a null-terminated sequence of numbers on the stack. Typing a string literal in will translate into a null-terminated sequence, for sanity. To escape a quotation, use "\"". To escape backslashes, use "\\".
 ** Operations
+   There are currently 8 single-letter operations. Additionally, you can type a single number to push that number onto the stack (64-bit signed integer). Space between operators and integers or function calls is optional.
 
-Currently supported operations:
-- a b ~ Store the value of a in register b
-- a $ Push register a onto the stack
-- b a ! NANDS index a with index b and stores the result in index b
-- a ^ pop 'a' elements
-- a ? if index a is true (non-zero), execute the rest of the line
-- "filename.blarb" @ Include the given file 
-- f e d c b a % Execute the system call with the given args
-- a b = Set the memory address at index b to the byte (not word) at index a
+*** NAND
+    b a ! NANDS index a with index b and stores the result in index b
+*** Store Register
+    a b ~ Store the value of a in register b
+*** Get Register
+    a $ Push register a onto the stack
+*** Pop from Stack
+    a ^ pop 'a' elements
+*** Conditional
+    a ? if index a is true (non-zero), execute the rest of the line
+*** Include File
+    "filename.blarb" @ Include the given file 
+*** System Calls
+    f e d c b a % Execute the system call with the given args
+*** Set Memory Address
+    a b = Set the memory address at index b to the byte (won't copy entire 64 bit integers!) at index a
+** Labels
+   Labels are created by:
+   
+   #+begin_src blarb
+     #labelname
+   #+end_src
+   and called by simply writing their name.
+   
+   e.g.
+   #+begin_src blarb
+     3 copyi
 
-Labels are created by:
+     #copyi ; Copy immediate
+         ; ... do stuff
+   #+end_src
+   
+   More documentation coming soon....
+*** TODO Functions
+*** TODO Control Statements
+* Standard Library
+  Note: Without the standard library, it will be extremely difficult to do anything - so you will probably want to include "lib.blarb" in all your programs.
+  
+  The standard library includes tons of useful functions - everything from bitwise operations to functions that will print string literals for you!
+  
+  Recall: Functions are called with "<args> functionname".
 
-#+begin_src blarb
-#labelname
-#+end_src
-and called by simply writing their name.
+  As of writing this document, the standard library includes:
+  
+  |------------------+-------+-------------------------------------------------|
+  | Function         | Args  | Description                                     |
+  |------------------+-------+-------------------------------------------------|
+  | nandi            | A B   | Bitwise NANDs the two top items on the stack    |
+  |------------------+-------+-------------------------------------------------|
+  | andi             | A B   | Bitwise ANDs the two top items on the stack     |
+  |------------------+-------+-------------------------------------------------|
+  | noti             | A     | Bitwise NOTs the top item on the stack          |
+  |------------------+-------+-------------------------------------------------|
+  | ori              | A B   | Bitwise ORs the top two items on the stack      |
+  |------------------+-------+-------------------------------------------------|
+  | xori             | A B   | Bitwise XORs the top two items on the stack     |
+  |------------------+-------+-------------------------------------------------|
+  | lshiftilone      | A     | Bit shifts the top item left left by one bit    |
+  |------------------+-------+-------------------------------------------------|
+  | addi             | A B   | Adds the top two elements on the stack          |
+  |------------------+-------+-------------------------------------------------|
+  | subi             | A B   | Subtracts B from A (A - B)                      |
+  |------------------+-------+-------------------------------------------------|
+  | seti             | V I   | Set's the word on the stack at                  |
+  |                  |       | index I to value V                              |
+  |------------------+-------+-------------------------------------------------|
+  | lshiftil         | A B   | Shift A left by B bits                          |
+  |------------------+-------+-------------------------------------------------|
+  | iseqi            | A B   | Checks if A is equal to B.                      |
+  |                  |       | Returns 1 if true, 0 if false.                  |
+  |------------------+-------+-------------------------------------------------|
+  | pushbytetoheapi  | A     | Pushes a _BYTE_ to the heap.                    |
+  |                  |       | Returns the address of the byte.                |
+  |------------------+-------+-------------------------------------------------|
+  | stackstrlen      | A     | Push the length of the string at                |
+  |                  |       | stack position A to the stack.                  |
+  |------------------+-------+-------------------------------------------------|
+  | print            | A B   | Prints the string at index A of length B        |
+  |------------------+-------+-------------------------------------------------|
+  | printline        | S     | Prints a null terminated string S, with a       |
+  |                  |       | newline character.                              |
+  |------------------+-------+-------------------------------------------------|
+  | pushstringtoheap | I     | Pushes the string at index I to the heap.       |
+  |                  |       | Retruns the memory address of the string on the |
+  |------------------+-------+-------------------------------------------------|
+  | openwithname     | S F M | Opens the file of the null terminated string S. |
+  |                  |       | F are the open syscall flags, M is the mode.    |
+  |                  |       | See the open syscall docs for more information. |
+  |                  |       | Returns the file descriptor number              |
+  |------------------+-------+-------------------------------------------------|
+  | closedescriptor  | A     | Closes file descriptor A                        |
+  |------------------+-------+-------------------------------------------------|
+  | exit             | (n/a) | Terminates your program                         |
+  |------------------+-------+-------------------------------------------------|
+* Syntax Highlighting
+  See the "editors" directory for some syntax highlighting plugins. Currently there are only Vim and Emacs plugins.
+* Examples
+** Loop Example
+   This code is using functions defined in lib.blarb.
+   
+   #+begin_src blarb
+     "lib.blarb" @ ; Include the library, which has nice functions (as used below)
 
-e.g.
-#+begin_src blarb
-3 copyi
+     0            ; Start with the number 0 on the stack
+     1 addi       ; Increment it
+     1 copy       ; Copy it twice (one for comparison, one for the list)
+     1 copy       ;
+     5 iseqi      ; Check if the number is 5
+     1 ? 2 ^ exit ; If it is 5 (1 ? means check the 1st stack index), exit
+     1 ^ -6 jumpi ; Otherwise, jump 6 lines back and continue execution (a loop)
 
-#copyi ; Copy immediate
-	; ... do stuff
-#+end_src
-
-To test, run "./blarb test/lib.blarb"
-
-The stack stores a collection of 64-bit words
-
-To include a file, you must push a null terminated string onto the stack.
-Or, you can use a string literal, which will automatically push a
-"backwards", null-terminated sequence of characters onto the stack.
-To escape a quotation, use "\"". To escape backslashes, use "\\"
-
-* Loop Example
-
-This code is using functions defined in lib.blarb.
-
-#+begin_src blarb
-"lib.blarb" @ ; Include the library, which has nice functions (as used below)
-
-0            ; Start with the number 0 on the stack
-1 addi       ; Increment it
-1 copy       ; Copy it twice (one for comparison, one for the list)
-1 copy       ;
-5 iseqi      ; Check if the number is 5
-1 ? 2 ^ exit ; If it is 5 (1 ? means check the 1st stack index), exit
-1 ^ -6 jumpi ; Otherwise, jump 6 lines back and continue execution (a loop)
-
-exit
-#+end_src
-
-The result of the above code is a list of numbers 1-5 on the stack.
+     exit
+   #+end_src
+   
+   The result of the above code is a list of numbers 1-5 on the stack.
