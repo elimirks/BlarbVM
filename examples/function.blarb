@@ -1,0 +1,21 @@
+; This program is an example of how to create a function
+
+; Pushes the current line to the stack
+; The stack will now contain 2, 3, and the current line number
+; No token are allowed after a call to a label
+12 9 andi
+
+-2 2 0 ~ 1 ^ ; exit the VM by setting the line pointer to -2
+
+; Bitwise AND the two arguments and push the result to the stack
+#andi
+    4 3 ! ; A NAND B (the two arguments)
+    4 4 ! ; NAND the result with itself to bitwise NOT it
+
+    ; Pop the stack frame and second argument.
+    ; The remaining stack data will only include the return value
+    ; The "2 0 ~" sets the line pointer to the return address
+    ; The "2 ^" pops the return address and the second argument
+    2 0 ~ 2 ^
+
+; Run this program with "--debug" to see the result on the stack

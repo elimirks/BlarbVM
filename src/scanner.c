@@ -24,15 +24,27 @@ token* BlarbVM_scanLine(BlarbVM *vm) {
     token *line = malloc(sizeof(token) * 1024);
     token_t tokenType;
 
+    int label_call_present = 0;
+
     while ((tokenType = yylex())) {
         token *t = &line[tokenCount++];
         // In general, we just care about the type.
         t->type = tokenType;
 
-        if (tokenType == INTEGER) {
+        if (tokenType == NEWLINE) {
+            break;
+        // No tokens (except newlines) are allowed after a function call
+        } else if (label_call_present) {
+            fprintf(stderr, "Parse error: "
+                    "No tokens are allowed after calls to labels.\n"
+                    "Error on line %d in %s\n",
+                    yylineno, yyfilename);
+            exit(1);
+        } else if (tokenType == INTEGER) {
             t->val = strtoull(yytext, 0, 10);
-        } else if (tokenType == FUNCTION_CALL) {
+        } else if (tokenType == LABEL_CALL) {
             addStringToToken(t, yytext, strlen(yytext));
+            label_call_present = 1;
         } else if (tokenType == LABEL) {
             // Exclude the hash
             addStringToToken(t, yytext + 1, strlen(yytext) - 1);
@@ -40,8 +52,6 @@ token* BlarbVM_scanLine(BlarbVM *vm) {
         } else if (tokenType == STR) {
             // Exclude quotes
             addStringToToken(t, yytext + 1, strlen(yytext) - 2);
-        } else if (tokenType == NEWLINE) {
-            break;
         }
     }
 

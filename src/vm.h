@@ -11,7 +11,7 @@ typedef size_t BlarbVM_WORD;
 typedef enum {
     // Note: There are no strings, since they are parsed while scanning
     INTEGER = 1,
-    FUNCTION_CALL,
+    LABEL_CALL,
     LABEL,
     INCLUDE,
     REG_STORE,

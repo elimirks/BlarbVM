@@ -15,7 +15,7 @@ integers      -?[0-9]+
 str           \"(\\.|[^\"])*\"
 identifiers   ([a-zA-Z_])([a-zA-Z0-9_])*
 label         "#"{identifiers}
-function_call {identifiers}
+label_call    {identifiers}
 newline       [\n]|[\r\n]|[\r]
 eol           $
 comment       ;.*$
@@ -23,7 +23,7 @@ comment       ;.*$
 %%
 
 {integers}      return INTEGER;
-{function_call} return FUNCTION_CALL;
+{label_call}    return LABEL_CALL;
 {str}           return STR;
 {label}         return LABEL;
 {newline}       return NEWLINE;

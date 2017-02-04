@@ -1,0 +1,24 @@
+; Fooling around with memory allocation - I'll document this eventually
+
+"lib.blarb" @
+
+42 pushbytetoheapi
+12 pushbytetoheapi
+42 pushbytetoheapi
+2 pushbytetoheapi
+4 pushbytetoheapi
+exit
+
+0 brki
+1 copy
+1 addi
+1 copy
+brki
+
+0 brki
+1 copy
+1 addi
+1 copy
+brki
+
+exit

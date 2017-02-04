@@ -144,7 +144,7 @@ size_t BlarbVM_systemCallFromStack(BlarbVM *vm) {
 
 	size_t ret;
 	if ((ret = syscall(arg[0], arg[1], arg[2], arg[3], arg[4], arg[5])) == -1) {
-		fprintf(stderr, "Syscall args: %d, %d, %d, %d, %d, %d",
+		fprintf(stderr, "Syscall args: %d, %d, %d, %d, %d, %d\n",
 			arg[0], arg[1], arg[2], arg[3], arg[4], arg[5]);
 		perror("syscall");
 	}
@@ -218,7 +218,7 @@ void BlarbVM_executeLine(BlarbVM *vm, token *line) {
         case INTEGER:
             Stack_push(&vm->stack, line->val);
             break;
-        case FUNCTION_CALL:
+        case LABEL_CALL:
 			BlarbVM_jumpToLabel(vm, line->str);
             // Returning b.c. it should ignore all other tokens on this line
             return;

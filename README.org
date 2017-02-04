@@ -3,8 +3,12 @@ Blarb is designed to be the simplest possible systems programming language. Bein
 
 ** Architecture
    In Blarb, there is a stack, heap, and [[Registers][registers]]. On the stack, every element is a 64-bit integer. To access the heap, you must use the [[System Calls][brk system call]].
+   
+   When you include a file with the [[Include File]["@" operator]], the tokens in that file will be appended to the parse tree - thus, you should _always_ exit the VM by setting the 0th [[Registers][register]] to a number less than -1, or call "exit" if you are using the [[Standard Library][standard library]].
 ** Registers
    There are 8 registers, numbered 0-7. The 0th register is the line pointer - that is, the line that is currently being evaluated. Registers 1-3 are short term registers, that may change when you call a function or jump to a label. Registers 4-7 are guaranteed to _never_ be used in lib.blarb (which I'll explain later), so you can use them for long term storage in your userspace programs.
+   
+   Setting the line pointer register to a number less than -1 will terminate the VM. Alternatively, see the "exit" function in the [[Standard Library][standard library]].
 
 |------------+---------------------|
 | Register # | Description         |
@@ -37,27 +41,49 @@ Blarb is designed to be the simplest possible systems programming language. Bein
     "filename.blarb" @ Include the given file 
 *** System Calls
     f e d c b a % Execute the system call with the given args
+    
+    Upon syscall error (returning -1), the Blarb VM will terminate. This may change in the future.
 *** Set Memory Address
     a b = Set the memory address at index b to the byte (won't copy entire 64 bit integers!) at index a
 ** Labels
-   Labels are created by:
+   Labels are created by a hash:
    
    #+begin_src blarb
      #labelname
    #+end_src
    and called by simply writing their name.
    
-   e.g.
-   #+begin_src blarb
-     3 copyi
+   When jumping to a label, the line that the label is on will be executed, ignoring "#labelname".
 
-     #copyi ; Copy immediate
-         ; ... do stuff
-   #+end_src
+   No tokens are allowed after a *jump* to a label, and you will get a parse error if you do so. Thus, a label call must be the last statement on a given line, if present.
    
-   More documentation coming soon....
-*** TODO Functions
-*** TODO Control Statements
+*** Functions
+    Blarb functions are a loosely defined construct, like in assembly, they are just labels. One scoop, though, is that whenever you call a function (e.g. "addi"), the current line number will automatically be pushed to the stack, acting as a return address.
+    
+    Example:
+   #+begin_src blarb
+     ; Pushes the current line to the stack
+     ; The stack will now contain 2, 3, and the current line number
+     ; No token are allowed after a call to a label
+     2 3 andi
+
+     -2 2 0 ~ 1 ^ ; exit the VM by setting the line pointer to -2
+
+     ; Bitwise AND the two arguments and push the result to the stack
+     #andi
+         4 3 ! ; A NAND B (the two arguments)
+         4 4 ! ; NAND the result with itself to bitwise NOT it
+
+         ; Pop the stack frame and second argument.
+         ; The remaining stack data will only include the return value
+         ; The "2 0 ~" sets the line pointer to the return address
+         ; The "2 ^" pops the return address and the second argument
+         2 0 ~ 2 ^
+
+     ; Run this program with "--debug" to see the result on the stack
+   #+end_src
+*** Control Statements
+    TODO ... coming soon ...
 * Standard Library
   Note: Without the standard library, it will be extremely difficult to do anything - so you will probably want to include "lib.blarb" in all your programs.
   
@@ -121,8 +147,9 @@ Blarb is designed to be the simplest possible systems programming language. Bein
   See the "editors" directory for some syntax highlighting plugins. Currently there are only Vim and Emacs plugins.
 * Examples
 ** Loop Example
-   This code is using functions defined in lib.blarb.
+   See the [[https://github.com/elimirks/BlarbVM/examples][examples]] directory for worked examples. Call them from same directory that has "lib.blarb". If you freshly cloned this project, this means running "./blarb --debug example/function.blarb", for instance.
    
+   lib.blarb usage example:
    #+begin_src blarb
      "lib.blarb" @ ; Include the library, which has nice functions (as used below)
 
