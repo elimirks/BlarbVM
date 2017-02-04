@@ -83,7 +83,24 @@ Blarb is designed to be the simplest possible systems programming language. Bein
      ; Run this program with "--debug" to see the result on the stack
    #+end_src
 *** Control Statements
-    TODO ... coming soon ...
+    Control structures are nothing special in Blarb either - they can be hacked together using labels.
+    One hickup with labels is that, when you call one, it automatically pushes the return address to the stack. For functions this looks nice, but with control structures you usually don't care about the return address, so you will generally want to pop it off using "1^" (which is the same as "1 ^").
+
+    Loop example:
+    #+begin_src blarb
+      ; This program will pop all the numbers on the stack until it hits a 0
+
+      ; Pushes a bunch of numbers onto the stack
+      32 52 42 0 1 52 35203 3502462
+
+      ; Call the loop label so the return address will be on the stack
+      loop
+      #loop 1^ ; 1^ pops the return address - we want to discard it in loops
+          1? 1^ loop
+
+      ; Pop the 0 for good measure
+      1^
+   #+end_src
 * Standard Library
   Note: Without the standard library, it will be extremely difficult to do anything - so you will probably want to include "lib.blarb" in all your programs.
   
@@ -144,24 +161,6 @@ Blarb is designed to be the simplest possible systems programming language. Bein
   | exit             | (n/a) | Terminates your program                         |
   |------------------+-------+-------------------------------------------------|
 * Syntax Highlighting
-  See the "editors" directory for some syntax highlighting plugins. Currently there are only Vim and Emacs plugins.
+  See the [[https://github.com/elimirks/BlarbVM/tree/master/editors][editors]] directory for some syntax highlighting plugins. Currently there are only Vim and Emacs plugins.
 * Examples
-** Loop Example
-   See the [[https://github.com/elimirks/BlarbVM/examples][examples]] directory for worked examples. Call them from same directory that has "lib.blarb". If you freshly cloned this project, this means running "./blarb --debug example/function.blarb", for instance.
-   
-   lib.blarb usage example:
-   #+begin_src blarb
-     "lib.blarb" @ ; Include the library, which has nice functions (as used below)
-
-     0            ; Start with the number 0 on the stack
-     1 addi       ; Increment it
-     1 copy       ; Copy it twice (one for comparison, one for the list)
-     1 copy       ;
-     5 iseqi      ; Check if the number is 5
-     1 ? 2 ^ exit ; If it is 5 (1 ? means check the 1st stack index), exit
-     1 ^ -6 jumpi ; Otherwise, jump 6 lines back and continue execution (a loop)
-
-     exit
-   #+end_src
-   
-   The result of the above code is a list of numbers 1-5 on the stack.
+   See the [[https://github.com/elimirks/BlarbVM/tree/master/examples][examples]] directory for worked examples. Call them from same directory that has "lib.blarb". If you freshly cloned this project, this means running "./blarb --debug example/function.blarb", for instance.

@@ -1,0 +1,13 @@
+; Run this program with "--debug" to see the result on the stack
+
+; Push this sequence of numbers onto the stack;
+; The loop will stop popping when it sees a 0
+32 52 42 0 1 52 35203 3502462
+
+; Call the loop label so the return address will be on the stack
+loop
+#loop 1^ ; 1^ pops the return address - we want to discard it in loops
+    1? 1^ loop
+
+; Pop the 0 for good measure
+1^
