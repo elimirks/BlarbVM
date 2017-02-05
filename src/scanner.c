@@ -5,9 +5,18 @@
 #include "../obj/blarb.yy.c"
 
 void BlarbVM_addLabelPointer(BlarbVM *vm, char *name, int line) {
+    LabelPointer *lab;
+    HASH_FIND_STR(vm->labelPointers, name, lab);
+    if (lab) {
+        fprintf(stderr, "Duplicate label '#%s', found in %s on line %d\n",
+                name, yyfilename, yylineno);
+        exit(1);
+    }
+
     LabelPointer *newLabel = malloc(sizeof(LabelPointer));
     strncpy(newLabel->name, name, sizeof(newLabel->name));
     newLabel->line = line;
+
     HASH_ADD_STR(vm->labelPointers, name, newLabel);
 }
 
