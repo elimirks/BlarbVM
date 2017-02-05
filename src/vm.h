@@ -20,10 +20,11 @@ typedef enum {
     NAND,
     CONDITION,
     SYS_CALL,
-    MEM_SET,
+    HEAP_SWAP,
     // These symbols get abstracted to the parser
     NEWLINE,
     STR,
+    CHR,
 } token_t;
 
 typedef struct token {

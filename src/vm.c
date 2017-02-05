@@ -148,8 +148,10 @@ void BlarbVM_setHeapValueFromStack(BlarbVM *vm) {
 	BlarbVM_WORD heapAddress = Stack_peek(vm, heapAddressIndex);
 	BlarbVM_WORD value = Stack_peek(vm, valueIndex);
 
+    char old_value = *((char *)heapAddress);
 	// Set the value in memory
 	*((char *)heapAddress) = value;
+    Stack_set(vm, valueIndex, old_value);
 
 	Stack_pop(vm);
 	Stack_pop(vm);
@@ -240,7 +242,7 @@ void BlarbVM_executeLine(BlarbVM *vm, token *line) {
                 Stack_push(vm, result);
             }
             break;
-        case MEM_SET:
+        case HEAP_SWAP:
 			BlarbVM_setHeapValueFromStack(vm);
             break;
         }

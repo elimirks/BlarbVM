@@ -26,6 +26,8 @@
 ;"test.txt" 0 0 openwithname
 ;closedescriptor
 
+;0 readchar Reads a single character from stdin
+
 exit
 
 
@@ -369,6 +371,30 @@ exit
 	; Now it's just the heap address - so we return that
 	1 2 ~
 	3 0 ~ 3 ^ 1 $
+
+
+
+; Takes a single argument: The file descriptor to read from.
+#readchar
+	0 brki ; Get the current heap address
+	1 addi
+	brki ; Extend it by one byte
+	1 subi
+    2 1 ~
+
+    4 2 ~; File descriptor argument
+
+    ; Read syscall is 0
+    0 0 1 1 $ 2 $ 0 %
+    1^ ; Pop the return status (ignore it for now)
+
+    0 2 3 =; Swap the heap byte out with a 0, so it's on the stack now
+
+    2 copy
+    brki ; Deallocate the buffer
+    
+    3 1 ~
+    5 0 ~ 5 ^ 1 $
 
 
 

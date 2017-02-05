@@ -13,6 +13,7 @@
 ws            [ ]|[\t]
 integers      -?[0-9]+
 str           \"(\\.|[^\"])*\"
+chr           \'(\\.|[^\'])\'
 identifiers   ([a-zA-Z_])([a-zA-Z0-9_])*
 label         "#"{identifiers}
 label_call    {identifiers}
@@ -25,6 +26,7 @@ comment       ;.*$
 {integers}      return INTEGER;
 {label_call}    return LABEL_CALL;
 {str}           return STR;
+{chr}           return CHR;
 {label}         return LABEL;
 {newline}       return NEWLINE;
 "@"             return INCLUDE;
@@ -34,7 +36,7 @@ comment       ;.*$
 "!"             return NAND;
 "?"             return CONDITION;
 "%"             return SYS_CALL;
-"="             return MEM_SET;
+"="             return HEAP_SWAP;
 
 {comment} {}
 {ws} {}

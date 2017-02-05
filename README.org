@@ -5,6 +5,8 @@ Blarb is designed to be the simplest possible systems programming language. Bein
    In Blarb, there is a stack, heap, and [[Registers][registers]]. On the stack, every element is a 64-bit integer. To access the heap, you must use the [[System Calls][brk system call]].
    
    When you include a file with the [[Include File]["@" operator]], the tokens in that file will be appended to the parse tree - thus, you should _always_ exit the VM by setting the 0th [[Registers][register]] to a number less than -1, or call "exit" if you are using the [[Standard Library][standard library]].
+   
+   Note: The heap doesn't use virtual addresses yet (coming soon), so when it is expanding, there is no guarantee that your memory will stay in the same place. For now, you should only use the heap for buffering... or if you feel ambitious, implement your own virtual memory addressing within Blarb code!
 ** Registers
    There are 8 registers, numbered 0-7. The 0th register is the line pointer - that is, the line that is currently being evaluated. Registers 1-3 are short term registers, that may change when you call a function or jump to a label. Registers 4-7 are guaranteed to _never_ be used in lib.blarb (which I'll explain later), so you can use them for long term storage in your userspace programs.
    
@@ -23,7 +25,9 @@ Blarb is designed to be the simplest possible systems programming language. Bein
 *** Integers
     64-bit singed integers - can be negative.
 *** Strings
-    In Blarb, a string is simply a null-terminated sequence of numbers on the stack. Typing a string literal in will translate into a null-terminated sequence, for sanity. To escape a quotation, use "\"". To escape backslashes, use "\\".
+    In Blarb, a string is simply a null-terminated sequence of numbers on the stack. Typing a string literal in will translate into a null-terminated sequence, for sanity. To escape a quotation, use "\"". To escape backslashes, use "\\". Newlines and tabs are escaped with "\n" and "\t", as usual.
+*** Characters
+    Characters are parsed like strings, but get turned into integer types when parsed. Thus, like most other language, a character can only contain a single byte (the character escapes still work).
 ** Operations
    There are currently 8 single-letter operations. Additionally, you can type a single number to push that number onto the stack (64-bit signed integer). Space between operators and integers or function calls is optional.
 
@@ -44,7 +48,9 @@ Blarb is designed to be the simplest possible systems programming language. Bein
     
     Upon syscall error (returning -1), the Blarb VM will terminate. This may change in the future.
 *** Set Memory Address
-    a b = Set the memory address at index b to the byte (won't copy entire 64 bit integers!) at index a
+    a b = Swap the value at memory address at index b to the byte (8 bits) at index a of the stack
+    
+    The value at stack index b should contain a valid memory address (see examples in lib.blarb, for now..)
 ** Labels
    Labels are created by a hash:
    
@@ -147,6 +153,8 @@ Blarb is designed to be the simplest possible systems programming language. Bein
   |------------------+-------+-------------------------------------------------|
   | printline        | S     | Prints a null terminated string S, with a       |
   |                  |       | newline character.                              |
+  |------------------+-------+-------------------------------------------------|
+  | readchar         | (n/a) | Reads a single character from stdin.            |
   |------------------+-------+-------------------------------------------------|
   | pushstringtoheap | I     | Pushes the string at index I to the heap.       |
   |                  |       | Retruns the memory address of the string on the |

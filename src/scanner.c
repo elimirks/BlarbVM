@@ -20,10 +20,59 @@ void BlarbVM_addLabelPointer(BlarbVM *vm, char *name, int line) {
     HASH_ADD_STR(vm->labelPointers, name, newLabel);
 }
 
+// Parses a char in a string or character literal
+char parseChar(char **str) {
+    char c = **str;
+    // Handle escaped characters
+    if (**str == '\\') {
+        char escapedChar = *(*str + 1);
+        switch (escapedChar) {
+        case 'n':
+            (*str)++;
+            c = '\n';
+            break;
+        case 't':
+            (*str)++;
+            c = '\t';
+            break;
+        case '\\':
+            (*str)++;
+            c = '\\';
+            break;
+        case '\'':
+            (*str)++;
+            c = '\'';
+            break;
+        case '\"':
+            (*str)++;
+            c = '\"';
+            break;
+        default:
+            fprintf(stderr, "Invalid character escape: %c\n", escapedChar);
+        }
+    }
+    (*str)++;
+    return c;
+}
+
 void addStringToToken(token *t, char *str, size_t len) {
     t->str = malloc(len + 1);
     t->str[len] = '\0';
     strncpy(t->str, str, len);
+}
+
+void addStringLiteralToToken(token *t, char *str) {
+    str++; // Cut out first double quote
+    *(strrchr(str, '\"')) = 0; // Cut out second double quote
+
+    t->str = malloc(strlen(str) + 1);
+
+    int i;
+    char *itr;
+    for (i = 0, itr = str; *itr; i++) {
+        t->str[i] = parseChar(&itr);
+    }
+    t->str[i] = '\0';
 }
 
 // Scans a line of tokens using yylex
@@ -34,6 +83,7 @@ token* BlarbVM_scanLine(BlarbVM *vm) {
     token_t tokenType;
 
     int label_call_present = 0;
+    int newline_present = 0;
 
     while ((tokenType = yylex())) {
         token *t = &line[tokenCount++];
@@ -41,6 +91,7 @@ token* BlarbVM_scanLine(BlarbVM *vm) {
         t->type = tokenType;
 
         if (tokenType == NEWLINE) {
+            newline_present = 1;
             break;
         // No tokens (except newlines) are allowed after a function call
         } else if (label_call_present) {
@@ -59,8 +110,11 @@ token* BlarbVM_scanLine(BlarbVM *vm) {
             addStringToToken(t, yytext + 1, strlen(yytext) - 1);
             BlarbVM_addLabelPointer(vm, t->str, vm->lineCount);
         } else if (tokenType == STR) {
-            // Exclude quotes
-            addStringToToken(t, yytext + 1, strlen(yytext) - 2);
+            addStringLiteralToToken(t, yytext);
+        } else if (tokenType == CHR) {
+            t->type = INTEGER;
+            char *s = yytext + 1;
+            t->val = parseChar(&s);
         }
     }
 
@@ -68,6 +122,12 @@ token* BlarbVM_scanLine(BlarbVM *vm) {
     if (tokenCount == 0) {
         free(line);
         return 0;
+    }
+
+    // In case we hit an EOF on a valid line (we use newlines for terminators)
+    if ( ! newline_present) {
+        token *t = &line[tokenCount++];
+        t->type = NEWLINE;
     }
 
     // Resize the memory chunk so we don't waste memory on small lines
