@@ -154,7 +154,7 @@ Blarb is designed to be the simplest possible systems programming language. Bein
   | printline        | S     | Prints a null terminated string S, with a       |
   |                  |       | newline character.                              |
   |------------------+-------+-------------------------------------------------|
-  | readchar         | (n/a) | Reads a single character from stdin.            |
+  | readchar         | D     | Reads a single character from descriptor D.     |
   |------------------+-------+-------------------------------------------------|
   | pushstringtoheap | I     | Pushes the string at index I to the heap.       |
   |                  |       | Retruns the memory address of the string on the |
