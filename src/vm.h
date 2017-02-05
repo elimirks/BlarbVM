@@ -34,11 +34,6 @@ typedef struct token {
     };
 } token;
 
-typedef struct ByteList {
-	struct ByteList *next;
-	BlarbVM_WORD value;
-} ByteList;
-
 typedef struct LabelPointer {
 	char name[64];
 	int line;
@@ -48,16 +43,17 @@ typedef struct LabelPointer {
 typedef struct BlarbVM {
 	void *heap;
 	size_t heapSize;
-	ByteList *stack;
+	BlarbVM_WORD *stack;
+    int stack_size;
+    int stack_top;
 	BlarbVM_WORD registers[8];
 	token **lines;
 	int lineCount;
 	LabelPointer *labelPointers;
 } BlarbVM;
 
-void Stack_push(ByteList **stack, BlarbVM_WORD value);
-BlarbVM_WORD Stack_pop(ByteList **stack);
-BlarbVM_WORD Stack_printDebug(ByteList **stack);
+void Stack_push(BlarbVM *vm, BlarbVM_WORD value);
+BlarbVM_WORD Stack_pop(BlarbVM *vm);
 
 void BlarbVM_execute(BlarbVM *vm);
 

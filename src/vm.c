@@ -6,65 +6,56 @@
 #include "vm.h"
 #include "main.h"
 
-void Stack_push(ByteList **stack, BlarbVM_WORD value) {
-	ByteList *oldHead = *stack;
-	*stack = malloc(sizeof(struct ByteList));
-
-	if (*stack == 0) {
-		fprintf(stderr, "Ran out of memory!\n");
-		terminateVM();
+void Stack_push(BlarbVM *vm, BlarbVM_WORD value) {
+	if (vm->stack_top == vm->stack_size) {
+		// Double the size when space runs out - amortized time is O(1)
+        vm->stack_size *= 2;
+		vm->stack = realloc(vm->stack, sizeof(BlarbVM_WORD) * vm->stack_size);
+        if (vm->stack == NULL) {
+            fprintf(stderr, "Ran out of memory!\n");
+            terminateVM();
+        }
 	}
 
-	(*stack)->value = value;
-	(*stack)->next = oldHead;
+    vm->stack[vm->stack_top] = value;
+    vm->stack_top += 1;
 }
 
-BlarbVM_WORD Stack_pop(ByteList **stack) {
-	ByteList *oldHead = *stack;
-
-	if (oldHead == 0) {
+BlarbVM_WORD Stack_pop(BlarbVM *vm) {
+    if (vm->stack_top == 0) {
 		fprintf(stderr, "Popped from the stack when it was empty!\n");
-		terminateVM();
-	}
+		//terminateVM();
+    }
+    if (vm->stack_top < (vm->stack_size / 2) - 1) {
+		// Preventing memory leakage, if we aren't using much of the stack anymore
+        vm->stack_size /= 2;
+		vm->stack = realloc(vm->stack, sizeof(BlarbVM_WORD) * vm->stack_size);
+        if (vm->stack == NULL) {
+            fprintf(stderr, "Ran out of memory!\n");
+            terminateVM();
+        }
+    }
 
-	*stack = oldHead->next;
-
-	BlarbVM_WORD value = oldHead->value;
-	free(oldHead);
-
-	return value;
+    vm->stack_top -= 1;
+    return vm->stack[vm->stack_top];
 }
 
-void Stack_set(ByteList **stack, BlarbVM_WORD index, BlarbVM_WORD value) {
-	ByteList *head = *stack;
-
-	while (index > 0 && head) {
-		head = head->next;
-		index--;
-	}
-
-	if ( ! head) {
+void Stack_set(BlarbVM *vm, BlarbVM_WORD index, BlarbVM_WORD value) {
+	if (index < 0 || index >= vm->stack_top) {
 		fprintf(stderr, "Tried setting over the stack limit: %d\n", index);
 		terminateVM();
 	}
 
-	head->value = value;
+    vm->stack[vm->stack_top - 1 - index] = value;
 }
 
-BlarbVM_WORD Stack_peek(ByteList **stack, BlarbVM_WORD index) {
-	ByteList *head = *stack;
-
-	while (index > 0 && head) {
-		head = head->next;
-		index--;
-	}
-
-	if ( ! head) {
-		fprintf(stderr, "Tried peeking over the stack limit: %d\n", index);
+BlarbVM_WORD Stack_peek(BlarbVM *vm, BlarbVM_WORD index) {
+	if (index < 0 || index >= vm->stack_top) {
+		fprintf(stderr, "Tried setting over the stack limit: %d\n", index);
 		terminateVM();
 	}
 
-	return head->value;
+    return vm->stack[vm->stack_top - 1 - index];
 }
 
 // Sets the line pointer register to the line of the given label
@@ -75,7 +66,7 @@ void BlarbVM_jumpToLabel(BlarbVM *vm, char *name) {
     HASH_FIND_STR(vm->labelPointers, name, lab);
 
     if (lab) {
-        Stack_push(&vm->stack, vm->registers[0]); // return address
+        Stack_push(vm, vm->registers[0]); // return address
         // -1 b.c. the line pointer increments
         vm->registers[0] = lab->line - 1;
     } else  {
@@ -85,22 +76,22 @@ void BlarbVM_jumpToLabel(BlarbVM *vm, char *name) {
 }
 
 void BlarbVM_pushStringLiteralToStack(BlarbVM *vm, char *line) {
-	Stack_push(&vm->stack, 0);
+	Stack_push(vm, 0);
 	// Push the string on the stack 'backwards'
 	for (int i = strlen(line); i >= 0; i--) {
-		Stack_push(&vm->stack, (BlarbVM_WORD)line[i]);
+		Stack_push(vm, (BlarbVM_WORD)line[i]);
 	}
 }
 
 void BlarbVM_setRegisterFromStack(BlarbVM *vm) {
-	BlarbVM_WORD stackIndex = Stack_peek(&vm->stack, 1);
-	BlarbVM_WORD regIndex = Stack_peek(&vm->stack, 0);
+	BlarbVM_WORD stackIndex = Stack_peek(vm, 1);
+	BlarbVM_WORD regIndex = Stack_peek(vm, 0);
 
-	vm->registers[regIndex] = Stack_peek(&vm->stack, stackIndex);
+	vm->registers[regIndex] = Stack_peek(vm, stackIndex);
 
 	// Pop args
-	Stack_pop(&vm->stack);
-	Stack_pop(&vm->stack);
+	Stack_pop(vm);
+	Stack_pop(vm);
 }
 
 void BlarbVM_includeFileOnStack(BlarbVM *vm) {
@@ -108,7 +99,7 @@ void BlarbVM_includeFileOnStack(BlarbVM *vm) {
 	size_t size = 0;
 
 	char c;
-	while (c = (char)Stack_pop(&vm->stack)) {
+	while ((c = (char)Stack_pop(vm))) {
 		fileName[size++] = c;
 	}
 	fileName[size] = '\0';
@@ -118,12 +109,12 @@ void BlarbVM_includeFileOnStack(BlarbVM *vm) {
 
 size_t BlarbVM_systemCallFromStack(BlarbVM *vm) {
 	BlarbVM_WORD arg[6];
-	arg[0] = Stack_pop(&vm->stack);
-	arg[1] = Stack_pop(&vm->stack);
-	arg[2] = Stack_pop(&vm->stack);
-	arg[3] = Stack_pop(&vm->stack);
-	arg[4] = Stack_pop(&vm->stack);
-	arg[5] = Stack_pop(&vm->stack);
+	arg[0] = Stack_pop(vm);
+	arg[1] = Stack_pop(vm);
+	arg[2] = Stack_pop(vm);
+	arg[3] = Stack_pop(vm);
+	arg[4] = Stack_pop(vm);
+	arg[5] = Stack_pop(vm);
 
 	// Custom BRK to internalize the VM heap
 	if (arg[0] == 12) {
@@ -152,60 +143,60 @@ size_t BlarbVM_systemCallFromStack(BlarbVM *vm) {
 }
 
 void BlarbVM_setHeapValueFromStack(BlarbVM *vm) {
-	BlarbVM_WORD heapAddressIndex = Stack_peek(&vm->stack, 0);
-	BlarbVM_WORD valueIndex = Stack_peek(&vm->stack, 1);
+	BlarbVM_WORD heapAddressIndex = Stack_peek(vm, 0);
+	BlarbVM_WORD valueIndex = Stack_peek(vm, 1);
 
-	BlarbVM_WORD heapAddress = Stack_peek(&vm->stack, heapAddressIndex);
-	BlarbVM_WORD value = Stack_peek(&vm->stack, valueIndex);
+	BlarbVM_WORD heapAddress = Stack_peek(vm, heapAddressIndex);
+	BlarbVM_WORD value = Stack_peek(vm, valueIndex);
 
 	// Set the value in memory
 	*((char *)heapAddress) = value;
 
-	Stack_pop(&vm->stack);
-	Stack_pop(&vm->stack);
+	Stack_pop(vm);
+	Stack_pop(vm);
 }
 
 void BlarbVM_pushRegisterToStack(BlarbVM *vm) {
-	BlarbVM_WORD regIndex = Stack_peek(&vm->stack, 0);
+	BlarbVM_WORD regIndex = Stack_peek(vm, 0);
 	BlarbVM_WORD regValue = vm->registers[regIndex];
 
 	// Pop args
-	Stack_pop(&vm->stack);
+	Stack_pop(vm);
 
-	Stack_push(&vm->stack, regValue);
+	Stack_push(vm, regValue);
 }
 
 void BlarbVM_nandOnStack(BlarbVM *vm) {
-	BlarbVM_WORD firstNandIndex = Stack_peek(&vm->stack, 0);
-	BlarbVM_WORD secondNandIndex = Stack_peek(&vm->stack, 1);
+	BlarbVM_WORD firstNandIndex = Stack_peek(vm, 0);
+	BlarbVM_WORD secondNandIndex = Stack_peek(vm, 1);
 
-	BlarbVM_WORD firstNandValue = Stack_peek(&vm->stack, firstNandIndex);
-	BlarbVM_WORD secondNandValue = Stack_peek(&vm->stack, secondNandIndex);
+	BlarbVM_WORD firstNandValue = Stack_peek(vm, firstNandIndex);
+	BlarbVM_WORD secondNandValue = Stack_peek(vm, secondNandIndex);
 
 	BlarbVM_WORD result = ~(firstNandValue & secondNandValue);
-	Stack_set(&vm->stack, secondNandIndex, result);
+	Stack_set(vm, secondNandIndex, result);
 
 	// Pop args
-	Stack_pop(&vm->stack);
-	Stack_pop(&vm->stack);
+	Stack_pop(vm);
+	Stack_pop(vm);
 }
 
 // Returns true if the conditional is a success
 int BlarbVM_conditionalFromStack(BlarbVM *vm) {
-	BlarbVM_WORD stackIndex = Stack_peek(&vm->stack, 0);
-	BlarbVM_WORD conditionalValue = Stack_peek(&vm->stack, stackIndex);
-	Stack_pop(&vm->stack);
+	BlarbVM_WORD stackIndex = Stack_peek(vm, 0);
+	BlarbVM_WORD conditionalValue = Stack_peek(vm, stackIndex);
+	Stack_pop(vm);
 	return conditionalValue != 0;
 }
 
 void BlarbVM_popOnStack(BlarbVM *vm) {
-	BlarbVM_WORD popAmount = Stack_pop(&vm->stack);
+	BlarbVM_WORD popAmount = Stack_pop(vm);
 
 	while (popAmount >= 1) {
-		Stack_pop(&vm->stack);
+		Stack_pop(vm);
 		popAmount--;
 
-		if ( ! &vm->stack) {
+		if (vm->stack_top == 0) {
 			fprintf(stderr, "Tried popping more stack elements than avalaible\n");
 			terminateVM();
 		}
@@ -216,7 +207,7 @@ void BlarbVM_executeLine(BlarbVM *vm, token *line) {
     while (line->type != NEWLINE) {
         switch (line->type) {
         case INTEGER:
-            Stack_push(&vm->stack, line->val);
+            Stack_push(vm, line->val);
             break;
         case LABEL_CALL:
 			BlarbVM_jumpToLabel(vm, line->str);
@@ -248,7 +239,7 @@ void BlarbVM_executeLine(BlarbVM *vm, token *line) {
         case SYS_CALL:
             {
                 BlarbVM_WORD result = BlarbVM_systemCallFromStack(vm);
-                Stack_push(&vm->stack, result);
+                Stack_push(vm, result);
             }
             break;
         case MEM_SET:
@@ -279,9 +270,8 @@ void BlarbVM_dumpDebug(BlarbVM *vm) {
 	}
 	fprintf(stderr, "\nStack:\n");
 
-	i = 0;
-	for (ByteList *head = vm->stack; head; head = head->next, i++) {
-		BlarbVM_WORD value = head->value;
+	for (i = 0; i < vm->stack_top; i++) {
+		BlarbVM_WORD value = vm->stack[i];
 		fprintf(stderr, "%d: %lld\n", i, value);
 	}
 
@@ -298,12 +288,15 @@ BlarbVM * BlarbVM_init() {
 	BlarbVM *vm = malloc(sizeof(BlarbVM));
 	memset(vm, 0, sizeof(BlarbVM));
 	vm->heap = malloc(1); // Give it some random address to start with
+    vm->stack = malloc(sizeof(BlarbVM_WORD));
+    vm->stack_size = 1;
+    vm->stack_top = 0;
 	return vm;
 }
 
 void BlarbVM_destroy(BlarbVM *vm) {
-	while (vm->stack) {
-		Stack_pop(&vm->stack);
+	while (vm->stack_top) {
+		Stack_pop(vm);
 	}
 
 	for (int i = 0; i < vm->lineCount; i++) {
