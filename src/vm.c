@@ -76,7 +76,6 @@ void BlarbVM_jumpToLabel(BlarbVM *vm, char *name) {
 }
 
 void BlarbVM_pushStringLiteralToStack(BlarbVM *vm, char *line) {
-	Stack_push(vm, 0);
 	// Push the string on the stack 'backwards'
 	for (int i = strlen(line); i >= 0; i--) {
 		Stack_push(vm, (BlarbVM_WORD)line[i]);
@@ -193,13 +192,12 @@ void BlarbVM_popOnStack(BlarbVM *vm) {
 	BlarbVM_WORD popAmount = Stack_pop(vm);
 
 	while (popAmount >= 1) {
-		Stack_pop(vm);
-		popAmount--;
-
 		if (vm->stack_top == 0) {
 			fprintf(stderr, "Tried popping more stack elements than avalaible\n");
 			terminateVM();
 		}
+		Stack_pop(vm);
+		popAmount--;
 	}
 }
 
