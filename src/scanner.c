@@ -4,6 +4,8 @@
 #include "vm.h"
 #include "../obj/blarb.yy.c"
 
+#define ISPOWEROF2(x) (x && !(x & (x - 1)))
+
 void BlarbVM_addLabelPointer(BlarbVM *vm, char *name, int line) {
     LabelPointer *lab;
     HASH_FIND_STR(vm->labelPointers, name, lab);
@@ -154,7 +156,7 @@ void BlarbVM_loadFile(BlarbVM *vm, char *fileName) {
 }
 
 void BlarbVM_addLine(BlarbVM *vm, token *line) {
-	if (vm->lineCount % 2 == 0) {
+	if (ISPOWEROF2(vm->lineCount) || vm->lineCount == 0) {
 		// Double the size when space runs out - amortized time is O(1)
 		vm->lines = vm->lineCount == 0
 			? malloc(sizeof(token_t *) * 1)
