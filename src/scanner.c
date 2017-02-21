@@ -4,8 +4,6 @@
 #include "vm.h"
 #include "../obj/blarb.yy.c"
 
-#define ISPOWEROF2(x) (x && !(x & (x - 1)))
-
 void BlarbVM_addLabelPointer(BlarbVM *vm, char *name, int line) {
     LabelPointer *lab;
     HASH_FIND_STR(vm->labelPointers, name, lab);

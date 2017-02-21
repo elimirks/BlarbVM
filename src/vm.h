@@ -1,5 +1,5 @@
-#ifndef __DATA_STRUCTURES_H__
-#define __DATA_STRUCTURES_H__
+#ifndef __VM_H__
+#define __VM_H__
 
 #include <stdint.h>
 #include <stddef.h>
@@ -56,6 +56,7 @@ typedef struct BlarbVM {
 void Stack_push(BlarbVM *vm, BlarbVM_WORD value);
 BlarbVM_WORD Stack_pop(BlarbVM *vm);
 
+int BlarbVM_step(BlarbVM *vm); // Steps through a single line of blarb
 void BlarbVM_execute(BlarbVM *vm);
 
 /**
@@ -80,4 +81,3 @@ void BlarbVM_loadFile(BlarbVM *vm, char *fileName);
  */
 void BlarbVM_addLine(BlarbVM *vm, token *line);
 #endif
-

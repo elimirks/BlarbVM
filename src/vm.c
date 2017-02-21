@@ -250,12 +250,19 @@ void BlarbVM_executeLine(BlarbVM *vm, token *line) {
     }
 }
 
-void BlarbVM_execute(BlarbVM *vm) {
+int BlarbVM_step(BlarbVM *vm) {
 	BlarbVM_WORD *lineToExecute = &(vm->registers[0]); // line pointer
-	while (*lineToExecute < vm->lineCount && *lineToExecute >= 0) {
+	if (*lineToExecute < vm->lineCount && *lineToExecute >= 0) {
 		BlarbVM_executeLine(vm, vm->lines[*lineToExecute]);
 		(*lineToExecute)++;
-	}
+        return 1;
+	} else {
+        return 0; 
+    }
+}
+
+void BlarbVM_execute(BlarbVM *vm) {
+    while (BlarbVM_step(vm));
 }
 
 void BlarbVM_dumpDebug(BlarbVM *vm) {
