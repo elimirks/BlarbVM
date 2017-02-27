@@ -34,7 +34,7 @@ Blarb is designed to be the simplest possible systems programming language. Bein
 *** NAND
     b a ! NANDS index a with index b and stores the result in index b
 *** Store Register
-    a b ~ Store the value of a in register b
+    a b ~ Store the value at index a in register b
 *** Get Register
     a $ Push register a onto the stack
 *** Pop from Stack
