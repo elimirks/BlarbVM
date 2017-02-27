@@ -21,7 +21,9 @@ void BlarbVM_debugger(BlarbVM *vm) {
 
     while (1) {
         printf("(bdb) ");
-        fgets(buffer, n, stdin);
+
+        if (fgets(buffer, n, stdin) == NULL) break;
+
         if ((c = strchr(buffer, '\n'))) *c = '\0';
 
         if (strncmp(buffer, "help", n) == 0) {
