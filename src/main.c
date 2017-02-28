@@ -1,6 +1,8 @@
+#include <getopt.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #include "main.h"
 #include "vm.h"
@@ -18,27 +20,36 @@ void abortWithUsage(char *arg0) {
 }
 
 int main(int argc, char **argv) {
+    int c;
     int flags = 0;
-
     char *fileName = NULL;
-    // Possibly load multiple files
-    for (int i = 1; i < argc; i++) {
-        if (strncmp(argv[i], "--debugger", 10) == 0) {
+
+    static struct option long_opts[] = {
+        { "debugger", no_argument, NULL, 'D' },
+        { "debug", no_argument, NULL, 'd' },
+        { 0, 0, 0, 0 }
+    };
+
+    while ((c = getopt_long(argc, argv, "Dd", long_opts, NULL)) != EOF) {
+        switch (c) {
+        case 'D':
             flags |= DEBUGGER;
-        } else if (strncmp(argv[i], "--debug", 7) == 0) {
+            break;
+        case 'd':
             flags |= DEBUG;
-        // Filename was already specified
-        } else if (fileName) {
+            break;
+        default:
             abortWithUsage(argv[0]);
-        } else {
-            fileName = argv[i];
+            break;
         }
     }
 
-	vm = BlarbVM_init();
-    if ( ! fileName) {
-        abortWithUsage(argv[0]);
-    } else if ((flags & DEBUG) && (flags & DEBUGGER)) {
+    if (optind != argc - 1)
+            abortWithUsage(argv[0]);
+    fileName = argv[optind];
+
+    vm = BlarbVM_init();
+    if ((flags & DEBUG) && (flags & DEBUGGER)) {
         printf("Invalid options: Can't have both --debug and --debugger\n");
         abortWithUsage(argv[0]);
     }
@@ -53,15 +64,15 @@ int main(int argc, char **argv) {
             BlarbVM_dumpDebug(vm);
         }
     }
-	BlarbVM_destroy(vm);
+    BlarbVM_destroy(vm);
 
-	return 0;
+    return 0;
 }
 
 void terminateVM() {
-	fprintf(stderr, "Terminating VM.\n");
-	BlarbVM_dumpDebug(vm);
-	BlarbVM_destroy(vm);
-	exit(1);
+    fprintf(stderr, "Terminating VM.\n");
+    BlarbVM_dumpDebug(vm);
+    BlarbVM_destroy(vm);
+    exit(1);
 }
 
