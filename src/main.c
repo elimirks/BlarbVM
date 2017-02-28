@@ -44,14 +44,12 @@ int main(int argc, char **argv) {
         }
     }
 
-    if (optind == argc || optind < argc - 1)
+    if (optind != argc - 1)
             abortWithUsage(argv[0]);
     fileName = argv[optind];
 
     vm = BlarbVM_init();
-    if ( ! fileName) {
-        abortWithUsage(argv[0]);
-    } else if ((flags & DEBUG) && (flags & DEBUGGER)) {
+    if ((flags & DEBUG) && (flags & DEBUGGER)) {
         printf("Invalid options: Can't have both --debug and --debugger\n");
         abortWithUsage(argv[0]);
     }
@@ -66,15 +64,15 @@ int main(int argc, char **argv) {
             BlarbVM_dumpDebug(vm);
         }
     }
-	BlarbVM_destroy(vm);
+    BlarbVM_destroy(vm);
 
-	return 0;
+    return 0;
 }
 
 void terminateVM() {
-	fprintf(stderr, "Terminating VM.\n");
-	BlarbVM_dumpDebug(vm);
-	BlarbVM_destroy(vm);
-	exit(1);
+    fprintf(stderr, "Terminating VM.\n");
+    BlarbVM_dumpDebug(vm);
+    BlarbVM_destroy(vm);
+    exit(1);
 }
 
