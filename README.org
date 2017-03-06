@@ -1,3 +1,5 @@
+[[./logo.jpg]]
+
 * BlarbVM
 Blarb is designed to be the simplest possible systems programming language. Being as such, there is only one logical operator: NAND. It is an assembly-like, stack & register based language.
 
