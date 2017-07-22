@@ -140,6 +140,10 @@ Blarb is designed to be the simplest possible systems programming language. Bein
   | seti             | V I   | Set's the word on the stack at                  |
   |                  |       | index I to value V                              |
   |------------------+-------+-------------------------------------------------|
+  | copy             | I     | Copy the element at stack index I               |
+  |------------------+-------+-------------------------------------------------|
+  | swap             | A B   | Swap the element at indices A and B |
+  |------------------+-------+-------------------------------------------------|
   | lshiftil         | A B   | Shift A left by B bits                          |
   |------------------+-------+-------------------------------------------------|
   | iseqi            | A B   | Checks if A is equal to B.                      |
