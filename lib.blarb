@@ -206,6 +206,33 @@ exit
 
 
 
+; Usage: I1 I2 swap
+; Swaps the contents of the two given stack indices (I1 and I2)
+#swap
+    ; Get first element
+    3 copy
+    2 addi
+    copy
+
+    ; Get second element
+    3 copy
+    3 addi
+    copy
+
+    ; Set first element
+    5 copy
+    4 addi
+    seti
+
+    ; Set second element
+    3 copy
+    3 addi
+    seti
+
+    2 0 ~ 3 ^
+
+
+
 ; Usage: value index seti
 ; Set's a word on the stack (at "index") to "value"
 #seti
