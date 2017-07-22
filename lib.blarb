@@ -258,16 +258,18 @@ exit
 
 
 
+; Usage: B pushbytetoheapi
+; Pushes byte B to the heap
 #pushbytetoheapi
-	; Extend the breakpoint
-	0 brki
-	1 addi
-	brki
-	1 subi
+    ; Extend the breakpoint
+    0 brki
+    1 addi
+    brki
+    1 subi
 
-	4 2 = ; Set the heap value to the byte parameter
+    4 2 = ; Set the heap value to the byte parameter
 
-	3 0 ~ 3 ^
+    3 0 ~ 3 ^
 
 
 
@@ -300,12 +302,12 @@ exit
 
 
 
-; A B copyarraytoheap
-; Copy array of length B at index A to the heap
+; I L pushbytearraytoheap
+; Copy array of length L at index I to the heap
 ; Returns the initial array index breakpoint
 #pushbytearraytoheap
 	0 brki
-	3 copy ; The length of the array (B)
+	3 copy ; The length of the array (L)
 	addi
 
 	brki ; Allocate memory for the byte array
@@ -322,27 +324,29 @@ exit
     #pushbytearraytoheaploop 1^
 
 	; On the stack at this point, just the initial breakpoint.
-	; If B is non-zero, copy the next pointer byte and loop again
+	; If L is non-zero, copy the next pointer byte and loop again
 	4 ? pushbytearraytoheaprun
 	
-	; If B is 0, terminate and return the initial breakpoint.
+	; If L is 0, terminate and return the initial breakpoint.
 	3 1 ~
 	4 0 ~ 5 ^ 1 $
 
     #pushbytearraytoheaprun 1^
 
-	5 copy ; A
-	5 addi ; Stack offset from this function
-	2 = ; Copy the byte to the heap
+	5 copy ; I
+	4 addi ; Stack offset from this function
+    copy ; Copy so we don't destroy stack content
+	2 3 = ; Swap the byte to the heap
+    1^
 
 	1 addi ; Increment the pointer
 
-	; Increment A
+	; Increment I
 	5 copy
 	1 addi 
 	6 seti
 
-	; Decrement B
+	; Decrement L
 	4 copy
 	1 subi
 	5 seti
