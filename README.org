@@ -6,7 +6,7 @@ Blarb is designed to be the simplest possible systems programming language. Bein
 ** Architecture
    In Blarb, there is a stack, heap, and [[Registers][registers]]. On the stack, every element is a 64-bit integer. To access the heap, you must use the [[System Calls][brk system call]].
    
-   When you include a file with the [[Include File]["@" operator]], the tokens in that file will be appended to the parse tree - thus, you should _always_ exit the VM by setting the 0th [[Registers][register]] to a number less than -1, or call "exit" if you are using the [[Standard Library][standard library]].
+   When you include a file with the [[Include File]["@" operator]], the tokens in that file will be appended to the parse tree - thus, you should _always_ exit the VM at the end of your programs by calling syscall 60 via ~0 0 0 0 0 60 %~, or call "0 exit" if you are using the [[Standard Library][standard library]].
    
    Note: The heap doesn't use virtual addresses yet (coming soon), so when it is expanding, there is no guarantee that your memory will stay in the same place. For now, you should only use the heap for buffering... or if you feel ambitious, implement your own virtual memory addressing within Blarb code!
 ** Registers
@@ -75,7 +75,7 @@ Blarb is designed to be the simplest possible systems programming language. Bein
      ; No token are allowed after a call to a label
      2 3 andi
 
-     -2 2 0 ~ 1 ^ ; exit the VM by setting the line pointer to -2
+     0 0 0 0 0 60 % ; exit by calling syscall 60
 
      ; Bitwise AND the two arguments and push the result to the stack
      #andi
@@ -142,7 +142,7 @@ Blarb is designed to be the simplest possible systems programming language. Bein
   |------------------+-------+-------------------------------------------------|
   | copy             | I     | Copy the element at stack index I               |
   |------------------+-------+-------------------------------------------------|
-  | swap             | A B   | Swap the element at indices A and B |
+  | swap             | A B   | Swap the element at indices A and B             |
   |------------------+-------+-------------------------------------------------|
   | lshiftil         | A B   | Shift A left by B bits                          |
   |------------------+-------+-------------------------------------------------|
@@ -172,7 +172,7 @@ Blarb is designed to be the simplest possible systems programming language. Bein
   |------------------+-------+-------------------------------------------------|
   | closedescriptor  | A     | Closes file descriptor A                        |
   |------------------+-------+-------------------------------------------------|
-  | exit             | (n/a) | Terminates your program                         |
+  | exit             | C     | Terminates your program with status code C      |
   |------------------+-------+-------------------------------------------------|
 * Syntax Highlighting
   See the [[https://github.com/elimirks/BlarbVM/tree/master/editors][editors]] directory for some syntax highlighting plugins. Currently there are only Vim and Emacs plugins.

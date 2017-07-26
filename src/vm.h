@@ -51,12 +51,14 @@ typedef struct BlarbVM {
 	token **lines;
 	int lineCount;
 	LabelPointer *labelPointers;
+    int running;
+    int exitCode;
 } BlarbVM;
 
 void Stack_push(BlarbVM *vm, BlarbVM_WORD value);
 BlarbVM_WORD Stack_pop(BlarbVM *vm);
 
-int BlarbVM_step(BlarbVM *vm); // Steps through a single line of blarb
+void BlarbVM_step(BlarbVM *vm); // Steps through a single line of blarb
 void BlarbVM_execute(BlarbVM *vm);
 
 /**

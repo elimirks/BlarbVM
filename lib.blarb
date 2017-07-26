@@ -28,7 +28,7 @@
 
 ;0 readchar Reads a single character from stdin
 
-exit
+0 exit
 
 
 
@@ -507,5 +507,5 @@ exit
 
 
 #exit
-    -2 2 0 ~ 2 ^ ; Exit (set the next execute line to a negative number)
-
+    3 1~
+    0 0 0 0 1$ 60 % 3^

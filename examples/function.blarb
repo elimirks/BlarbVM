@@ -5,7 +5,7 @@
 ; No token are allowed after a call to a label
 12 9 andi
 
--2 2 0 ~ 1 ^ ; exit the VM by setting the line pointer to -2
+0 0 0 0 0 60 % ; exit by calling syscall 60
 
 ; Bitwise AND the two arguments and push the result to the stack
 #andi

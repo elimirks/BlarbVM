@@ -7,7 +7,7 @@
 42 pushbytetoheapi
 2 pushbytetoheapi
 4 pushbytetoheapi
-exit
+0 exit
 
 0 brki
 1 copy
@@ -21,4 +21,4 @@ brki
 1 copy
 brki
 
-exit
+0 exit

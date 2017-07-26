@@ -29,26 +29,32 @@ void BlarbVM_debugger(BlarbVM *vm) {
         if (strncmp(buffer, "help", n) == 0) {
             help();
         } else if (strncmp(buffer, "run", n) == 0) {
-            int stepped = 0;
-            while (BlarbVM_step(vm)) {
-                stepped = 1;
+            while (vm->running) {
+                BlarbVM_step(vm);
                 BlarbVM_WORD lp = vm->registers[0];
                 if (hit_breakpoint(vm, breakpoints, breakpoint_count)) {
                     printf("Hit breakpoint on line %ld\n", lp);
                     break;
                 }
             }
-            if ( ! stepped) {
+            if ( ! vm->running) {
                 printf("Hit end of program.\n");
             }
         } else if (strncmp(buffer, "dump", n) == 0) {
             BlarbVM_dumpDebug(vm);
         } else if (strncmp(buffer, "step", n) == 0) {
             BlarbVM_WORD lp = vm->registers[0]; // line pointer
-            if (BlarbVM_step(vm)) {
+            BlarbVM_step(vm);
+            if (vm->running) {
                 printf("Executed line %ld\n", lp);
             } else {
                 printf("Hit end of program.\n");
+            }
+        } else if (strncmp(buffer, "status", n) == 0) {
+            if (vm->running) {
+                printf("VM is still running\n");
+            } else {
+                printf("Exit status: %d\n", (unsigned char)vm->exitCode);
             }
         } else if (strncmp(buffer, "break", 1) == 0) {
             int line = atoi(&buffer[6]);
@@ -71,6 +77,7 @@ void help() {
            "dump:    Show a Blarb dump\n"
            "step:    Run a step (a single line)\n"
            "break n: Set a breakpoint at line 'n'\n"
+           "status:  Get exit status\n"
            "\n");
 }
 

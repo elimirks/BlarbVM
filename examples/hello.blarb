@@ -2,5 +2,5 @@
 "lib.blarb" @
 
 "Hello, Blarb!" printline
-exit
+0 exit
 
