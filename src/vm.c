@@ -24,7 +24,7 @@ void Stack_push(BlarbVM *vm, BlarbVM_WORD value) {
 BlarbVM_WORD Stack_pop(BlarbVM *vm) {
     if (vm->stack_top == 0) {
 		fprintf(stderr, "Popped from the stack when it was empty!\n");
-		//terminateVM();
+		terminateVM();
     }
     if (vm->stack_top < (vm->stack_size / 2) - 1) {
 		// Preventing memory leakage, if we aren't using much of the stack anymore
