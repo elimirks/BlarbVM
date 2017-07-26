@@ -18,8 +18,7 @@ identifiers   ([a-zA-Z_])([a-zA-Z0-9_])*
 label         "#"{identifiers}
 label_call    {identifiers}
 newline       [\n]|[\r\n]|[\r]
-eol           $
-comment       ;.*$
+comment       ;.*
 
 %%
 
