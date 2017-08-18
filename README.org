@@ -1,7 +1,7 @@
 [[./logo.jpg]]
 
 * BlarbVM
-Blarb is designed to be the simplest possible systems programming language. Being as such, there is only one logical operator: NAND. It is an assembly-like, stack & register based language.
+Blarb is designed to be the simplest possible (esoteric) systems programming language. Being as such, there is only one logical operator: NAND. It is an assembly-like, stack & register based language.
 
 ** Architecture
    In Blarb, there is a stack, heap, and [[Registers][registers]]. On the stack, every element is a 64-bit integer. To access the heap, you must use the [[System Calls][brk system call]].
