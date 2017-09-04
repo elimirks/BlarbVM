@@ -7,18 +7,11 @@
 #include "main.h"
 
 void Stack_push(BlarbVM *vm, BlarbVM_WORD value) {
-	if (vm->stack_top == vm->stack_size) {
-		// Double the size when space runs out - amortized time is O(1)
-        vm->stack_size *= 2;
-		vm->stack = realloc(vm->stack, sizeof(BlarbVM_WORD) * vm->stack_size);
-        if (vm->stack == NULL) {
-            fprintf(stderr, "Ran out of memory!\n");
-            terminateVM();
-        }
+	if (vm->stack_top == BLARB_STACK_SIZE - 1) {
+        fprintf(stderr, "Blarb Stack Overflow!\n");
+        terminateVM();
 	}
-
-    vm->stack[vm->stack_top] = value;
-    vm->stack_top += 1;
+    vm->stack[(vm->stack_top)++] = value;
 }
 
 BlarbVM_WORD Stack_pop(BlarbVM *vm) {
@@ -26,18 +19,7 @@ BlarbVM_WORD Stack_pop(BlarbVM *vm) {
 		fprintf(stderr, "Popped from the stack when it was empty!\n");
 		terminateVM();
     }
-    if (vm->stack_top < (vm->stack_size / 2) - 1) {
-		// Preventing memory leakage, if we aren't using much of the stack anymore
-        vm->stack_size /= 2;
-		vm->stack = realloc(vm->stack, sizeof(BlarbVM_WORD) * vm->stack_size);
-        if (vm->stack == NULL) {
-            fprintf(stderr, "Ran out of memory!\n");
-            terminateVM();
-        }
-    }
-
-    vm->stack_top -= 1;
-    return vm->stack[vm->stack_top];
+    return vm->stack[--(vm->stack_top)];
 }
 
 void Stack_set(BlarbVM *vm, BlarbVM_WORD index, BlarbVM_WORD value) {
@@ -303,8 +285,6 @@ BlarbVM * BlarbVM_init() {
 	BlarbVM *vm = malloc(sizeof(BlarbVM));
 	memset(vm, 0, sizeof(BlarbVM));
 	vm->heap = malloc(1); // Give it some random address to start with
-    vm->stack = malloc(sizeof(BlarbVM_WORD));
-    vm->stack_size = 1;
     vm->stack_top = 0;
     vm->exitCode = 0;
     vm->running = 1;

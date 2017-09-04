@@ -7,6 +7,8 @@
 
 typedef size_t BlarbVM_WORD;
 
+#define BLARB_STACK_SIZE (16384)
+
 // Token types
 typedef enum {
     // Note: There are no strings, since they are parsed while scanning
@@ -44,8 +46,7 @@ typedef struct LabelPointer {
 typedef struct BlarbVM {
 	void *heap;
 	size_t heapSize;
-	BlarbVM_WORD *stack;
-    int stack_size;
+	BlarbVM_WORD stack[BLARB_STACK_SIZE];
     int stack_top;
 	BlarbVM_WORD registers[8];
 	token **lines;
