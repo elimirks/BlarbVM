@@ -12,10 +12,11 @@
 #define DEBUG 1
 #define DEBUGGER 2
 
-static BlarbVM *vm;
+static BlarbVM vm;
 
 void abortWithUsage(char *arg0) {
-    fprintf(stderr, "Usage: %s [--debug|--debugger] path/to/code.blarb\n", arg0);
+    fprintf(stderr, "Usage: %s [--debug|--debugger] "
+            "path/to/code.blarb [ARG]...\n", arg0);
     exit(1);
 }
 
@@ -44,36 +45,46 @@ int main(int argc, char **argv) {
         }
     }
 
-    if (optind != argc - 1)
-            abortWithUsage(argv[0]);
-    fileName = argv[optind];
-
     if ((flags & DEBUG) && (flags & DEBUGGER)) {
         printf("Invalid options: Can't have both --debug and --debugger\n");
         abortWithUsage(argv[0]);
     }
 
-    vm = BlarbVM_init();
-    BlarbVM_loadFile(vm, fileName);
+    // Means no file name was specified
+    if (optind == argc) {
+        abortWithUsage(argv[0]);
+    }
+
+    fileName = argv[optind];
+    optind++;
+
+    BlarbVM_init(&vm);
+    // Argv
+    for (int i = optind; i < argc; ++i) {
+        BlarbVM_pushStackArg(&vm, argv[i]);
+    }
+    // Argc
+    BlarbVM_pushToStack(&vm, argc - optind);
+    BlarbVM_loadFile(&vm, fileName);
 
     if (flags & DEBUGGER) {
-        BlarbVM_debugger(vm);
+        BlarbVM_debugger(&vm);
     } else {
-        BlarbVM_execute(vm);
+        BlarbVM_execute(&vm);
         if (flags & DEBUG) {
-            BlarbVM_dumpDebug(vm);
+            BlarbVM_dumpDebug(&vm);
         }
     }
 
-    size_t exitCode = vm->exitCode;
-    BlarbVM_destroy(vm);
+    size_t exitCode = vm.exitCode;
+    BlarbVM_destroy(&vm);
     return exitCode;
 }
 
 void terminateVM() {
     fprintf(stderr, "Terminating VM.\n");
-    BlarbVM_dumpDebug(vm);
-    BlarbVM_destroy(vm);
+    BlarbVM_dumpDebug(&vm);
+    BlarbVM_destroy(&vm);
     exit(1);
 }
 

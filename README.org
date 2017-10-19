@@ -109,6 +109,8 @@ Blarb is designed to be the simplest possible (esoteric) systems programming lan
       ; Pop the 0 for good measure
       1^
    #+end_src
+** Args
+   Args are pushed to the beginning of the VM stack, as "backward strings", like string literals. The arg count (argc, if you will), is always pushed onto the stack afterwards. Even when there are 0 args.
 * Standard Library
   Note: Without the standard library, it will be extremely difficult to do anything - so you will probably want to include "lib.blarb" in all your programs.
   

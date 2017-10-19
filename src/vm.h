@@ -56,8 +56,12 @@ typedef struct BlarbVM {
     int exitCode;
 } BlarbVM;
 
-void Stack_push(BlarbVM *vm, BlarbVM_WORD value);
-BlarbVM_WORD Stack_pop(BlarbVM *vm);
+void BlarbVM_pushToStack(BlarbVM *vm, BlarbVM_WORD value);
+
+/**
+ * Pushes the given string to the stack.
+ */
+void BlarbVM_pushStackArg(BlarbVM *vm, const char *s);
 
 void BlarbVM_step(BlarbVM *vm); // Steps through a single line of blarb
 void BlarbVM_execute(BlarbVM *vm);
@@ -71,7 +75,7 @@ void BlarbVM_dumpDebug(BlarbVM *vm);
 /**
  * Create a new VM.
  */
-BlarbVM * BlarbVM_init();
+void BlarbVM_init(BlarbVM *vm);
 /**
  * Destroy an existing VM.
  */
