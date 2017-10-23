@@ -60,7 +60,7 @@ int main(int argc, char **argv) {
 
     BlarbVM_init(&vm);
     // Argv
-    for (int i = optind; i < argc; ++i) {
+    for (int i = argc - 1; i >= optind; --i) {
         BlarbVM_pushStackArg(&vm, argv[i]);
     }
     // Argc

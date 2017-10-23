@@ -10,6 +10,7 @@ roloop
 #roloop 1^
     readandoutputchar
     1? 1^ roloop
+1^
 
 closedescriptor
 

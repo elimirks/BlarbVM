@@ -1,0 +1,68 @@
+"lib.blarb" @
+
+; This program is a simple implemantion of the cat program
+; This implementation does not support the "-" arg.. yet!
+
+1 ? concatargs
+1^
+; Print stdin
+0 printdescriptor
+0 exit
+
+; Part of the program that deals with multiple args
+#concatargs 1^
+2 4~ 1^ ; Store argc in register 4
+
+catloop
+#catloop 1^
+    ; Check if there are more files in the args to cat
+    4$ 0 iseqi
+    1? 1^ 0 exit
+    1^
+
+    ; Decrement argc
+    4$ 1 subi
+    2 4~ 1^
+
+    0 0 openwithname
+
+    printdescriptor
+    closedescriptor
+    catloop
+
+0 exit
+
+#printdescriptor
+    2 copy
+    ; The print loop
+    roloop
+    #roloop 1^
+        readandoutputchar
+        1? 1^ roloop
+    2^ 2 0 ~ 1^
+
+; Takes in a file descriptor
+; Returns 0 when there are no more characters
+#readandoutputchar
+    0 brki ; Get the current heap address
+    1 addi
+    brki ; Extend it by one byte
+    1 subi
+    2 1 ~
+
+    4 2 ~ ; File descriptor
+
+    ; Read some books!
+    0 0 1 1$ 2$ 0 %
+
+    0 2 4 = ; Swap the heap byte out with a 0, so it's on the stack now
+
+    2? 2 1 print ; Print the character, if it was read properly
+
+    ; Deallocate the heap buffer
+    3 copy
+    brki
+
+    ; Return the status of the read syscall
+    4 1 ~
+    6 0 ~ 5^ 1$
