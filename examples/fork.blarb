@@ -1,0 +1,23 @@
+"lib.blarb" @
+
+; This program demonstrates forking a process
+
+forkloop
+#forkloop 1^
+    ; The fork syscall
+    0 0 0 0 0 57 %
+    0 iseqi
+    1 ? child
+
+    1^ ; Pop off the child PID
+
+    ; Call the wait syscall
+    ; With a given PID of 0, it waits for any child process
+    0 0 0 0 0 61 %
+    "But I'm still the parent!" printline
+
+    forkloop
+
+#child
+    "I'm a new child!" printline
+    0 exit
