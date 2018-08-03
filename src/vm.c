@@ -44,13 +44,12 @@ BlarbVM_WORD BlarbVM_peekOnStack(BlarbVM *vm, BlarbVM_WORD index) {
 // Also pushes the current line to the stack
 // Implicit: "0 $ #labelName 0 2 ~ 1 ^"
 void BlarbVM_jumpToLabel(BlarbVM *vm, char *name) {
-    LabelPointer *lab;
-    HASH_FIND_STR(vm->labelPointers, name, lab);
+    LabelPointer *label;
+    HASH_FIND_STR(vm->labelPointers, name, label);
 
-    if (lab) {
-        BlarbVM_pushToStack(vm, vm->registers[0]); // return address
+    if (label) {
         // -1 b.c. the line pointer increments
-        vm->registers[0] = lab->line - 1;
+        vm->registers[0] = label->line - 1;
     } else  {
         fprintf(stderr, "Label not found: %s\n", name);
         terminateVM();

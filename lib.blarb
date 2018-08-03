@@ -12,18 +12,15 @@
 ;42 0$pushbytetoheapi ; The value "42" should be on the heap
 ;"hello" 1 0$stackstrlen ; Should return 5
 
-;"Hello, world!" 0$printline
-;"Blarb." 0$printline
-
-;"Hello, world!" 2 13 0$print
+;10 "Hello, world!" 2 15 0$print
 ;10 2 1 0$print
-;"Blarb." 2 6 0$print
-;10 2 1 0$print
+;10 "Blarb." 2 8 0$print
+;10 'a' 2 2 0$print ; Should print "a\n"
 
-;"Hello, world!" printline
+;"Hello, Blarb!" 0$printline
 ;"hello" 1 0$pushstringtoheap
 
-"test.txt" 0 0 0$openwithname
+;"test.txt" 0 0 0$openwithname
 ;0$closedescriptor
 
 ;0 0$readchar Reads a single character from stdin
@@ -309,7 +306,7 @@
     ; If the value at the pointer is null, return!
     1 0$copy
     0$copy
-    1? 1^ 0$stackstrlenrun
+    1? 1^ stackstrlenrun
     1^
 
     ; Difference between initial string pointer and the end
@@ -404,10 +401,10 @@
 
 ; Takes a single argument: The file descriptor to read from.
 #readchar
-    0 brki ; Get the current heap address
-    1 addi
-    brki ; Extend it by one byte
-    1 subi
+    0 0$brki ; Get the current heap address
+    1 0$addi
+    0$brki ; Extend it by one byte
+    1 0$subi
     2 1 ~
 
     4 2 ~; File descriptor argument
@@ -418,8 +415,8 @@
 
     0 2 3 =; Swap the heap byte out with a 0, so it's on the stack now
 
-    2 copy
-    brki ; Deallocate the buffer
+    2 0$copy
+    0$brki ; Deallocate the buffer
     
     3 1 ~
     5 0 ~ 5 ^ 1 $
@@ -429,12 +426,12 @@
 ; Prints the array at the given index
 ; A B print - Prints the array at index A of length B
 #print
-    3 copy ; Index
-    3 addi
-    3 copy ; Length
-    pushbytearraytoheap ; Replaces index and length with a heap pointer
+    3 0$copy ; Index
+    3 0$addi
+    3 0$copy ; Length
+    0$pushbytearraytoheap ; Replaces index and length with a heap pointer
 
-    3 copy
+    3 0$copy
 
     ; Length in reg 1 and pointer in reg 2
     2 1 ~ 3 2 ~
@@ -442,8 +439,8 @@
     ; Print from the heap
     0 0 1 $ 2 $ 1 1 %
 
-    3 copy ; Pointer to the beginning of the string (on the heap)
-    brki ; Deallocate the string, now that we are done printing.
+    3 0$copy ; Pointer to the beginning of the string (on the heap)
+    0$brki ; Deallocate the string, now that we are done printing.
 
     6 0 ~ 7 ^
 
@@ -452,17 +449,17 @@
 ; Shortcut to print a line (with a newline) and pop the string
 ; "str" printline - Prints the null terminated <str>
 #printline
-    2 stackstrlen
+    2 0$stackstrlen
     4
-    2 copy
-    print
+    2 0$copy
+    0$print
 
     ; Print a newline
-    10 2 1 print
+    10 2 1 0$print
     1 ^
 
     ; Pop the length of the string, plus stack vars, plus null byte
-    3 addi
+    3 0$addi
     2 1 ~
     3 0 ~ 1 $ ^
 
@@ -472,8 +469,8 @@
 ; e.g. "test.txt" FLAGS MODE openwithname
 ; mode 0 is read only (see Linux "open" syscall docs)
 #openwithname
-    4 pushstringtoheap
-    0 pushbytetoheapi ; the open syscall needs a null termination
+    4 0$pushstringtoheap
+    0 0$pushbytetoheapi ; the open syscall needs a null termination
 
     2 1 ~ ; name
     5 2 ~ ; flags
@@ -481,12 +478,12 @@
     ; Now we have a pointer to that string on the stack
     0 0 3 $ 2 $ 1 $ 2 %
 
-    2 copy ; Pointer to the beginning of the string (on the heap)
-    brki   ; Deallocate the string, now that we are done printing.
+    2 0$copy ; Pointer to the beginning of the string (on the heap)
+    0$brki   ; Deallocate the string, now that we are done printing.
 
     ; Figure out the string length and pop em' all!
-    7 stackstrlen
-    7 addi
+    7 0$stackstrlen
+    7 0$addi
 
     4 2 ~ ; Store the file descriptor value, so we can return it
     6 0 ~ ^ 2 $
