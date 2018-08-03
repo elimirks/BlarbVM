@@ -1,34 +1,34 @@
-;7 3 nandi    ; Should be -4
-;4 12 andi    ; Should be 4
-;0 noti       ; Should be -1 (all ones)
-;8 4 ori      ; Should be 12
-;8 12 xori    ; Should be 4
-;255 lshiftilone ; Should be 510
-;9 128 addi   ; Should be 137
-;37 12 subi   ; Should be 25
-;2 2 2 42 3 seti
-;1 2 lshiftil ; Should be 4
-;3 4 iseqi ; Should be 0
-;42 pushbytetoheapi ; The value "42" should be on the heap
-;"hello" 1 stackstrlen ; Should return 5
+;7 3 0$nandi    ; Should be -4
+;4 12 0$andi    ; Should be 4
+;0 0$noti       ; Should be -1 (all ones)
+;8 4 0$ori      ; Should be 12
+;8 12 0$xori    ; Should be 4
+;255 0$lshiftilone ; Should be 510
+;9 128 0$addi   ; Should be 137
+;37 12 0$subi   ; Should be 25
+;2 2 2 42 3 0$seti
+;1 2 0$lshiftil ; Should be 4
+;3 4 0$iseqi ; Should be 0
+;42 0$pushbytetoheapi ; The value "42" should be on the heap
+;"hello" 1 0$stackstrlen ; Should return 5
+
+;"Hello, world!" 0$printline
+;"Blarb." 0$printline
+
+;"Hello, world!" 2 13 0$print
+;10 2 1 0$print
+;"Blarb." 2 6 0$print
+;10 2 1 0$print
 
 ;"Hello, world!" printline
-;"Blarb." printline
+;"hello" 1 0$pushstringtoheap
 
-;"Hello, world!" 2 13 print
-;10 2 1 print
-;"Blarb." 2 6 print
-;10 2 1 print
+"test.txt" 0 0 0$openwithname
+;0$closedescriptor
 
-;"Hello, world!" printline
-;"hello" 1 pushstringtoheap
+;0 0$readchar Reads a single character from stdin
 
-;"test.txt" 0 0 openwithname
-;closedescriptor
-
-;0 readchar Reads a single character from stdin
-
-0 exit
+0 0$exit
 
 
 
@@ -43,7 +43,7 @@
 
 
 ; NANDs the two immediate values
-#nandi ;
+#nandi
     4 3 !         ; Nand it up
     2 1 ~ 2 ^ 1 $ ; Get rid of extra argument
     2 0 ~ 1 ^     ; return
@@ -74,13 +74,13 @@
 #xori
     4 1 ~ 1 $ ; Copy A and B
     4 1 ~ 1 $
-    nandi
+    0$nandi
 
     5 1 ~ 1 $ ; Copy A and B again
     5 1 ~ 1 $
-    ori
+    0$ori
 
-    andi
+    0$andi
 
     2 1 ~ 1 ^ ; Pop n' store
     2 0 ~ 3 ^ 1 $ ; Return the stored result
@@ -101,59 +101,58 @@
     4611686018427387904 9223372036854775808 0
 
     69 1 ~ 1 $ ; Copy of the param
-    lshiftiloleloop
 
-    #lshiftiloleloop 1^
+    #lshiftiloneloop
     3 ? lshiftilonerun
     ; At this point, there will just be 0,1,<returnvalue> on the stack
     2 1 ~
     5 0 ~ 5 ^ 1 $
 
-    #lshiftilonerun 1^
+    #lshiftilonerun
 
     ;0 1 2 4 .. 128 0 value
 
     ; Check if the bit is set (a new boolean will be on the stack)
     2 1 ~ 1 $
     5 1 ~ 1 $
-    andi
+    0$andi
 
     ; Copy the mutating return value
     3 1 ~ 1 $
 
-    6 1 ~ 1 $ noti ; Invert the next single bit mask
-    andi ; unset the next bit
+    6 1 ~ 1 $ 0$noti ; Invert the next single bit mask
+    0$andi ; unset the next bit
 
     ; Set the next bit if the above boolean is true
-    2 ? 5 1 ~ 1 $ ori
+    2 ? 5 1 ~ 1 $ 0$ori
 
     ; Pop n drop!
     2 1 ~ 4 ^ 1 $
 
-    lshiftiloleloop
+    lshiftiloneloop
 
 
 
 ; A B lshiftil -> A shifted left be B bits
 #lshiftil
-    3 copy ; A
+    3 0$copy ; A
 
     ; If B is 0, return (base case)
-    3 copy
-    tobooli
-    1 xori
+    3 0$copy
+    0$tobooli
+    1 0$xori
     1 ? 4 0 ~ 3 1 ~ 5 ^ 1 $
     1 ^
 
     ; Recursive case - shift and recurse!
 
-    lshiftilone ; Shift A
+    0$lshiftilone ; Shift A
 
     ; Decrement B
-    3 copy
-    1 subi
+    3 0$copy
+    1 0$subi
 
-    lshiftil
+    0$lshiftil
 
     3 0 ~ 2 1 ~ 4 ^ 1 $
 
@@ -162,21 +161,21 @@
 ; Recursive adder
 #addi
     ; Base case: If the param B is 0, return param A by itself.
-    3 1 ~ 1 $ tobooli
-    1 xori ; negate the boolean
+    3 1 ~ 1 $ 0$tobooli
+    1 0$xori ; negate the boolean
     1 ? 3 0 ~ 3 ^ ; return A
     1 ^ ; Pop the above conditional boolean
 
     4 1 ~ 1 $ ; Copy A and B
     4 1 ~ 1 $
-    xori ; sum
+    0$xori ; sum
 
     5 1 ~ 1 $ ; Copy A and B again
     5 1 ~ 1 $
-    andi ; carry
-    lshiftilone
+    0$andi ; carry
+    0$lshiftilone
 
-    addi ; Recurse!
+    0$addi ; Recurse!
 
     2 1 ~
     3 0 ~ 4 ^ 1 $
@@ -186,11 +185,11 @@
 ; Subtract: A B subi -> A - B
 #subi
     ; Two's compliment of B
-    3 1 ~ 1 $ noti
-    1 addi
+    3 1 ~ 1 $ 0$noti
+    1 0$addi
 
     5 1 ~ 1 $ ; A
-    addi ; A - B
+    0$addi ; A - B
 
     2 1 ~
     3 0 ~ 4 ^ 1 $
@@ -200,7 +199,7 @@
 ; Usage: index copy
 ; Copies the word on the stack at "index" to the top of the stack
 #copy
-    3 1 ~ 1 $ 3 addi ; index
+    3 1 ~ 1 $ 3 0$addi ; index
     1 ~
     2 0 ~ 2 ^ 1 $
 
@@ -210,24 +209,24 @@
 ; Swaps the contents of the two given stack indices (I1 and I2)
 #swap
     ; Get first element
-    3 copy
-    2 addi
-    copy
+    3 0$copy
+    2 0$addi
+    0$copy
 
     ; Get second element
-    3 copy
-    3 addi
-    copy
+    3 0$copy
+    3 0$addi
+    0$copy
 
     ; Set first element
-    5 copy
-    4 addi
-    seti
+    5 0$copy
+    4 0$addi
+    0$seti
 
     ; Set second element
-    3 copy
-    3 addi
-    seti
+    3 0$copy
+    3 0$addi
+    0$seti
 
     2 0 ~ 3 ^
 
@@ -236,18 +235,18 @@
 ; Usage: value index seti
 ; Set's a word on the stack (at "index") to "value"
 #seti
-    3 copy ; value
+    3 0$copy ; value
 
-    3 copy ; index
-    5 addi
-    1 copy
+    3 0$copy ; index
+    5 0$addi
+    1 0$copy
 
     0 ! ; Set the value at the given index to all 1s
-    1 copy
+    1 0$copy
 
     3 ! ; At this point, the stack var is the inverse of what it should be
-    1 subi
-    1 copy
+    1 0$subi
+    1 0$copy
     !
     3 0 ~ 4 ^
 
@@ -255,7 +254,7 @@
 
 ; A jumpi -> jump by A lines
 #jumpi
-    addi
+    0$addi
     2 0 ~ 1 ^
 
 
@@ -263,9 +262,9 @@
 ; Checks if two numbers are equal
 ; Returns 1 if they are equal, 0 if not.
 #iseqi
-    3 copy
-    3 copy
-    xori
+    3 0$copy
+    3 0$copy
+    0$xori
     1 ? 3 0 ~ 4 ^ 0
     3 0 ~ 4 ^ 1
 
@@ -289,10 +288,10 @@
 ; Pushes byte B to the heap
 #pushbytetoheapi
     ; Extend the breakpoint
-    0 brki
-    1 addi
-    brki
-    1 subi
+    0 0$brki
+    1 0$addi
+    0$brki
+    1 0$subi
 
     4 2 = ; Set the heap value to the byte parameter
 
@@ -302,29 +301,28 @@
 
 ; B stackstrlen Push the length of the string at stack index B
 #stackstrlen
-    2 copy ; Starting stack index
-    3 addi ; Offset from the return address
+    2 0$copy ; Starting stack index
+    3 0$addi ; Offset from the return address
 
-    stackstrlenloop
-    #stackstrlenloop 1^
+    #stackstrlenloop
 
     ; If the value at the pointer is null, return!
-    1 copy
-    copy
-    1 ? 1 ^ stackstrlenrun
-    1 ^
+    1 0$copy
+    0$copy
+    1? 1^ 0$stackstrlenrun
+    1^
 
     ; Difference between initial string pointer and the end
-    3 copy
-    3 addi
-    subi
+    3 0$copy
+    3 0$addi
+    0$subi
 
     2 1 ~
     3 0 ~ 3 ^ 1 $
 
-    #stackstrlenrun 1^
+    #stackstrlenrun
     ; Increment the string pointer
-    1 addi
+    1 0$addi
     stackstrlenloop
 
 
@@ -333,22 +331,21 @@
 ; Copy array of length L at index I to the heap
 ; Returns the initial array index breakpoint
 #pushbytearraytoheap
-    0 brki
-    3 copy ; The length of the array (L)
-    addi
+    0 0$brki
+    3 0$copy ; The length of the array (L)
+    0$addi
 
-    brki ; Allocate memory for the byte array
+    0$brki ; Allocate memory for the byte array
     1 ^
 
     ; New initial breakpoint (it may have changed address)
-    0 brki
-    3 copy
-    subi
+    0 0$brki
+    3 0$copy
+    0$subi
 
-    1 copy ; A following pointer (for byte copying)
+    1 0$copy ; A following pointer (for byte copying)
 
-    pushbytearraytoheaploop
-    #pushbytearraytoheaploop 1^
+    #pushbytearraytoheaploop
 
     ; On the stack at this point, just the initial breakpoint.
     ; If L is non-zero, copy the next pointer byte and loop again
@@ -358,25 +355,25 @@
     3 1 ~
     4 0 ~ 5 ^ 1 $
 
-    #pushbytearraytoheaprun 1^
+    #pushbytearraytoheaprun
 
-    5 copy ; I
-    4 addi ; Stack offset from this function
-    copy ; Copy so we don't destroy stack content
+    5 0$copy ; I
+    4 0$addi ; Stack offset from this function
+    0$copy ; Copy so we don't destroy stack content
     2 3 = ; Swap the byte to the heap
     1^
 
-    1 addi ; Increment the pointer
+    1 0$addi ; Increment the pointer
 
     ; Increment I
-    5 copy
-    1 addi 
-    6 seti
+    5 0$copy
+    1 0$addi 
+    6 0$seti
 
     ; Decrement L
-    4 copy
-    1 subi
-    5 seti
+    4 0$copy
+    1 0$subi
+    5 0$seti
 
     pushbytearraytoheaploop
 
@@ -385,19 +382,19 @@
 ; Pushes the string at the given stack index to the heap (no null byte)
 ; Returns the heap memory address
 #pushstringtoheap
-    2 copy
-    2 addi ; Offset the index because of the local vars
-    stackstrlen
+    2 0$copy
+    2 0$addi ; Offset the index because of the local vars
+    0$stackstrlen
     ; The index, again
-    3 copy
-    3 addi
+    3 0$copy
+    3 0$addi
 
     ; Swap the stack vars, since the stack index is on the top now
     2 1 ~ 3 2 ~ 2 ^ 1 $ 2 $
 
     ; At this point, INDEX and SIZE should be on the stack
 
-    pushbytearraytoheap
+    0$pushbytearraytoheap
 
     ; Now it's just the heap address - so we return that
     1 2 ~
