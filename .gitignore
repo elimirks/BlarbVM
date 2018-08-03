@@ -1,3 +1,6 @@
 obj
 blarb
 .*sw?
+GPATH
+GRTAGS
+GTAGS

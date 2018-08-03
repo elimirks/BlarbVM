@@ -4,25 +4,24 @@
 ; This program demonstrates basic file I/O
 ; It will simply print itself
 
-"examples/file.blarb" 0 0 openwithname
+"examples/file.blarb" 0 0 0$openwithname
 
-roloop
-#roloop 1^
-    readandoutputchar
+#roloop
+    0$readandoutputchar
     1? 1^ roloop
 1^
 
-closedescriptor
+0$closedescriptor
 
-0 exit
+0 0$exit
 
 ; Takes in a file descriptor
 ; Returns 0 when there are no more characters
 #readandoutputchar
-    0 brki ; Get the current heap address
-    1 addi
-    brki ; Extend it by one byte
-    1 subi
+    0 0$brki ; Get the current heap address
+    1 0$addi
+    0$brki ; Extend it by one byte
+    1 0$subi
     2 1 ~
 
     4 2 ~ ; File descriptor
@@ -32,11 +31,11 @@ closedescriptor
 
     0 2 4 = ; Swap the heap byte out with a 0, so it's on the stack now
 
-    2? 2 1 print ; Print the character, if it was read properly
+    2? 2 1 0$print ; Print the character, if it was read properly
 
     ; Deallocate the heap buffer
-    3 copy
-    brki
+    3 0$copy
+    0$brki
 
     ; Return the status of the read syscall
     4 1 ~

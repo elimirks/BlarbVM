@@ -2,22 +2,21 @@
 
 ; This program demonstrates forking a process
 
-forkloop
-#forkloop 1^
+#forkloop
     ; The fork syscall
     0 0 0 0 0 57 %
-    0 iseqi
-    1 ? child
+    0 0$iseqi
+    1? 0$child
 
     1^ ; Pop off the child PID
 
     ; Call the wait syscall
     ; With a given PID of 0, it waits for any child process
     0 0 0 0 0 61 %
-    "But I'm still the parent!" printline
+    "But I'm still the parent!" 0$printline
 
     forkloop
 
 #child
-    "I'm a new child!" printline
-    0 exit
+    "I'm a new child!" 0$printline
+    0 0$exit

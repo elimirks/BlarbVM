@@ -3,7 +3,7 @@
 ; Pushes the current line to the stack
 ; The stack will now contain 2, 3, and the current line number
 ; No token are allowed after a call to a label
-12 9 andi
+12 9 0$andi
 
 0 0 0 0 0 60 % ; exit by calling syscall 60
 
@@ -16,6 +16,6 @@
     ; The remaining stack data will only include the return value
     ; The "2 0 ~" sets the line pointer to the return address
     ; The "2 ^" pops the return address and the second argument
-    2 0 ~ 2 ^
+    2 0 ~ 2^
 
 ; Run this program with "--debug" to see the result on the stack

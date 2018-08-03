@@ -66,7 +66,7 @@
    No tokens are allowed after a *jump* to a label, and you will get a parse error if you do so. Thus, a label call must be the last statement on a given line, if present.
    
 *** Functions
-    Blarb functions are a loosely defined construct, like in assembly, they are just labels. Thus, you must push the line registor to the stack using ~0$~ (e.g. ~0$andi~).
+    Blarb functions are a loosely defined construct, like in assembly, they are just labels. Thus, you must push the line register to the stack using ~0$~ (e.g. ~0$andi~).
     
     Example:
     #+begin_src blarb

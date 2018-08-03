@@ -2,23 +2,23 @@
 
 "lib.blarb" @
 
-42 pushbytetoheapi
-12 pushbytetoheapi
-42 pushbytetoheapi
-2 pushbytetoheapi
-4 pushbytetoheapi
-0 exit
+42 0$pushbytetoheapi
+12 0$pushbytetoheapi
+42 0$pushbytetoheapi
+2 0$pushbytetoheapi
+4 0$pushbytetoheapi
+0 0$exit
 
-0 brki
-1 copy
-1 addi
-1 copy
-brki
+0 0$brki
+1 0$copy
+1 0$addi
+1 0$copy
+0$brki
 
-0 brki
-1 copy
-1 addi
-1 copy
-brki
+0 0$brki
+1 0$copy
+1 0$addi
+1 0$copy
+0$brki
 
-0 exit
+0 0$exit

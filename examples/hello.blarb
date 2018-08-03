@@ -1,6 +1,6 @@
 ; Includes the standard library - you would be mad to not include this!
 "lib.blarb" @
 
-"Hello, Blarb!" printline
-0 exit
+"Hello, Blarb!" 0$printline
+0 0$exit
 
