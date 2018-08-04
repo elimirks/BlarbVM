@@ -5,7 +5,7 @@
 ; No token are allowed after a call to a label
 12 9 0$andi
 
-0 0 0 0 0 60 % ; exit by calling syscall 60
+0 0 0 0 0 0 60 % ; exit by calling syscall 60
 
 ; Bitwise AND the two arguments and push the result to the stack
 #andi

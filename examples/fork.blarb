@@ -4,7 +4,7 @@
 
 #forkloop
     ; The fork syscall
-    0 0 0 0 0 57 %
+    0 0 0 0 0 0 57 %
     0 0$iseqi
     1? 0$child
 
@@ -12,7 +12,7 @@
 
     ; Call the wait syscall
     ; With a given PID of 0, it waits for any child process
-    0 0 0 0 0 61 %
+    0 0 0 0 0 0 61 %
     "But I'm still the parent!" 0$printline
 
     forkloop

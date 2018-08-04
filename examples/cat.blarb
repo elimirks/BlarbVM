@@ -51,7 +51,7 @@
     4 2 ~ ; File descriptor
 
     ; Read some books!
-    0 0 1 1$ 2$ 0 %
+    0 0 0 1 1$ 2$ 0 %
 
     0 2 4 = ; Swap the heap byte out with a 0, so it's on the stack now
 

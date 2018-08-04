@@ -278,7 +278,7 @@
 ; B brki; new brk endpoint B (or 0)
 #brki
     3 1 ~
-    0 0 0 0 1$ 12 % ; brk it up
+    0 0 0 0 0 1$ 12 % ; brk it up
     3 0 ~ 2 1 ~ 3^ 1$
 
 
@@ -413,7 +413,7 @@
     4 2 ~; File descriptor argument
 
     ; Read syscall is 0
-    0 0 1 1$ 2$ 0 %
+    0 0 0 1 1$ 2$ 0 %
     1^ ; Pop the return status (ignore it for now)
 
     0 2 3 =; Swap the heap byte out with a 0, so it's on the stack now
@@ -440,7 +440,7 @@
     2 1 ~ 3 2 ~
 
     ; Print from the heap
-    0 0 1 $ 2 $ 1 1 %
+    0 0 0 1 $ 2 $ 1 1 %
 
     3 0$copy ; Pointer to the beginning of the string (on the heap)
     0$brki ; Deallocate the string, now that we are done printing.
@@ -479,7 +479,7 @@
     5 2 ~ ; flags
     4 3 ~ ; mode
     ; Now we have a pointer to that string on the stack
-    0 0 3 $ 2 $ 1 $ 2 %
+    0 0 0 3$ 2$ 1$ 2 %
 
     2 0$copy ; Pointer to the beginning of the string (on the heap)
     0$brki   ; Deallocate the string, now that we are done printing.
@@ -497,7 +497,7 @@
 ; Returns nothing (but really... we should return a status)
 #closedescriptor
     3 1 ~ ; Store the descriptor number for sanity
-    0 0 0 0 1 $ 3 %
+    0 0 0 0 0 1 $ 3 %
     ; Note: The syscall operater returns a status - we assume it works :)
     3 0 ~ 3 ^
 
@@ -505,4 +505,4 @@
 
 #exit
     3 1~
-    0 0 0 0 1$ 60 % 3^
+    0 0 0 0 0 1$ 60 % 3^

@@ -106,28 +106,28 @@ size_t BlarbVM_exit(BlarbVM *vm, size_t exitCode) {
     return 0;
 }
 
-size_t BlarbVM_performSyscall(BlarbVM_WORD arg0, BlarbVM_WORD arg1,
-                              BlarbVM_WORD arg2, BlarbVM_WORD arg3,
-                              BlarbVM_WORD arg4, BlarbVM_WORD arg5) {
+size_t BlarbVM_performSyscall(BlarbVM_WORD num,
+                              BlarbVM_WORD arg1, BlarbVM_WORD arg2,
+                              BlarbVM_WORD arg3, BlarbVM_WORD arg4,
+                              BlarbVM_WORD arg5, BlarbVM_WORD arg6) {
 	size_t ret;
-	if ((ret = syscall(arg0, arg1, arg2, arg3, arg4, arg5)) == (size_t)-1) {
-		fprintf(stderr, "Syscall args: %lu, %lu, %lu, %lu, %lu, %lu\n",
-			arg0, arg1, arg2, arg3, arg4, arg5);
+	if ((ret = syscall(num, arg1, arg2, arg3, arg4, arg5, arg6)) == (size_t)-1) {
+		fprintf(stderr, "Syscall args: %lu, %lu, %lu, %lu, %lu, %lu, %lu\n",
+                num, arg1, arg2, arg3, arg4, arg5, arg6);
 		perror("syscall");
 	}
 	return ret;
 }
 
-// TODO make 7 args, NOT 6!
-
 size_t BlarbVM_systemCallFromStack(BlarbVM *vm) {
-	BlarbVM_WORD arg[6];
+	BlarbVM_WORD arg[7];
 	arg[0] = BlarbVM_popFromStack(vm);
 	arg[1] = BlarbVM_popFromStack(vm);
 	arg[2] = BlarbVM_popFromStack(vm);
 	arg[3] = BlarbVM_popFromStack(vm);
 	arg[4] = BlarbVM_popFromStack(vm);
 	arg[5] = BlarbVM_popFromStack(vm);
+	arg[6] = BlarbVM_popFromStack(vm);
 
     // TODO: Intercept more...
     // Specifically, with syscalls that use memory addresses.
@@ -141,15 +141,15 @@ size_t BlarbVM_systemCallFromStack(BlarbVM *vm) {
     switch (arg[0]) {
     case 0:
     case 1:
-        return BlarbVM_performSyscall(arg[0], arg[1], arg[2] + heapAddr, arg[3], 0, 0);
+        return BlarbVM_performSyscall(arg[0], arg[1], arg[2] + heapAddr, arg[3], 0, 0, 0);
     case 2:
-        return BlarbVM_performSyscall(arg[0], arg[1] + heapAddr, arg[2], arg[3], 0, 0);
+        return BlarbVM_performSyscall(arg[0], arg[1] + heapAddr, arg[2], arg[3], 0, 0, 0);
     case 12:
         return BlarbVM_brk(vm, arg[1]);
     case 60:
         return BlarbVM_exit(vm, arg[1]);
     default:
-        return BlarbVM_performSyscall(arg[0], arg[1], arg[2], arg[3], arg[4], arg[5]);
+        return BlarbVM_performSyscall(arg[0], arg[1], arg[2], arg[3], arg[4], arg[5], arg[6]);
     }
 }
 
