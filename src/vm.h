@@ -47,10 +47,10 @@ typedef struct BlarbVM {
 	void *heap;
 	size_t heapSize;
 	BlarbVM_WORD stack[BLARB_STACK_SIZE];
-    int stack_top;
+    BlarbVM_WORD stack_top;
 	BlarbVM_WORD registers[8];
 	token **lines;
-	int lineCount;
+	BlarbVM_WORD lineCount;
 	LabelPointer *labelPointers;
     int running;
     int exitCode;

@@ -23,7 +23,9 @@
 ;"test.txt" 0 0 0$openwithname
 ;0$closedescriptor
 
-;0 0$readchar Reads a single character from stdin
+0 0$readchar ; Reads a single character from stdin
+
+;5 0$brki
 
 0 0$exit
 
@@ -276,8 +278,8 @@
 ; B brki; new brk endpoint B (or 0)
 #brki
     3 1 ~
-    0 0 0 0 1 $ 12 % ; brk it up
-    3 0 ~ 2 1 ~ 3 ^ 1 $
+    0 0 0 0 1$ 12 % ; brk it up
+    3 0 ~ 2 1 ~ 3^ 1$
 
 
 
@@ -399,6 +401,7 @@
 
 
 
+; FIXME this is broken
 ; Takes a single argument: The file descriptor to read from.
 #readchar
     0 0$brki ; Get the current heap address
@@ -410,7 +413,7 @@
     4 2 ~; File descriptor argument
 
     ; Read syscall is 0
-    0 0 1 1 $ 2 $ 0 %
+    0 0 1 1$ 2$ 0 %
     1^ ; Pop the return status (ignore it for now)
 
     0 2 3 =; Swap the heap byte out with a 0, so it's on the stack now

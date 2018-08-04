@@ -24,7 +24,7 @@ BlarbVM_WORD BlarbVM_popFromStack(BlarbVM *vm) {
 
 void BlarbVM_setOnStack(BlarbVM *vm, BlarbVM_WORD index, BlarbVM_WORD value) {
 	if (index < 0 || index >= vm->stack_top) {
-		fprintf(stderr, "Tried setting over the stack limit: %d\n", index);
+		fprintf(stderr, "Tried setting over the stack limit: %lu\n", index);
 		terminateVM();
 	}
 
@@ -33,7 +33,7 @@ void BlarbVM_setOnStack(BlarbVM *vm, BlarbVM_WORD index, BlarbVM_WORD value) {
 
 BlarbVM_WORD BlarbVM_peekOnStack(BlarbVM *vm, BlarbVM_WORD index) {
 	if (index < 0 || index >= vm->stack_top) {
-		fprintf(stderr, "Tried setting over the stack limit: %d\n", index);
+		fprintf(stderr, "Tried setting over the stack limit: %lu\n", index);
 		terminateVM();
 	}
 
@@ -89,22 +89,36 @@ void BlarbVM_includeFileOnStack(BlarbVM *vm) {
 
 size_t BlarbVM_brk(BlarbVM *vm, size_t newEnd) {
     if (newEnd) {
-        size_t currentEnd = (size_t)vm->heap + vm->heapSize;
-        // If the break point is before the beggining of the heap (bad)
-        if (newEnd < (size_t)vm->heap) {
-            return currentEnd; // Do nothing (as per linux brk implementation)
+        // If the break point is before the beggining of the heap
+        if (newEnd < 0) {
+            return vm->heapSize; // Do nothing (as per linux brk implementation)
         }
         // Resize the heap
-        vm->heapSize = newEnd - (size_t)vm->heap;
+        vm->heapSize = newEnd;
         vm->heap = realloc(vm->heap, vm->heapSize);
     }
-    return (size_t)(vm->heap) + vm->heapSize;
+    return vm->heapSize;
 }
 
 size_t BlarbVM_exit(BlarbVM *vm, size_t exitCode) {
     vm->running = 0;
     vm->exitCode = exitCode;
+    return 0;
 }
+
+size_t BlarbVM_performSyscall(BlarbVM_WORD arg0, BlarbVM_WORD arg1,
+                              BlarbVM_WORD arg2, BlarbVM_WORD arg3,
+                              BlarbVM_WORD arg4, BlarbVM_WORD arg5) {
+	size_t ret;
+	if ((ret = syscall(arg0, arg1, arg2, arg3, arg4, arg5)) == (size_t)-1) {
+		fprintf(stderr, "Syscall args: %lu, %lu, %lu, %lu, %lu, %lu\n",
+			arg0, arg1, arg2, arg3, arg4, arg5);
+		perror("syscall");
+	}
+	return ret;
+}
+
+// TODO make 7 args, NOT 6!
 
 size_t BlarbVM_systemCallFromStack(BlarbVM *vm) {
 	BlarbVM_WORD arg[6];
@@ -115,28 +129,38 @@ size_t BlarbVM_systemCallFromStack(BlarbVM *vm) {
 	arg[4] = BlarbVM_popFromStack(vm);
 	arg[5] = BlarbVM_popFromStack(vm);
 
-    switch (arg[0]) {
-    case 12: return BlarbVM_brk(vm, arg[1]);
-    case 60: return BlarbVM_exit(vm, arg[1]);
-    }
+    // TODO: Intercept more...
+    // Specifically, with syscalls that use memory addresses.
+    // This should be delegated to a syscall C file. That way, it will be easy to map multi-platform.
 
-	size_t ret;
-	if ((ret = syscall(arg[0], arg[1], arg[2], arg[3], arg[4], arg[5])) == -1) {
-		fprintf(stderr, "Syscall args: %d, %d, %d, %d, %d, %d\n",
-			arg[0], arg[1], arg[2], arg[3], arg[4], arg[5]);
-		perror("syscall");
-	}
-	return ret;
+    const size_t heapAddr = (size_t)vm->heap;
+
+    // Refer to http://blog.rchapman.org/posts/Linux_System_Call_Table_for_x86_64/
+    // Many syscalls must map the virtual Blarb addresses to real VM heap address
+    // Note: This is currently an incomplete list.
+    switch (arg[0]) {
+    case 0:
+    case 1:
+        return BlarbVM_performSyscall(arg[0], arg[1], arg[2] + heapAddr, arg[3], 0, 0);
+    case 2:
+        return BlarbVM_performSyscall(arg[0], arg[1] + heapAddr, arg[2], arg[3], 0, 0);
+    case 12:
+        return BlarbVM_brk(vm, arg[1]);
+    case 60:
+        return BlarbVM_exit(vm, arg[1]);
+    default:
+        return BlarbVM_performSyscall(arg[0], arg[1], arg[2], arg[3], arg[4], arg[5]);
+    }
 }
 
 void BlarbVM_setHeapValueFromStack(BlarbVM *vm) {
-	BlarbVM_WORD heapAddressIndex = BlarbVM_peekOnStack(vm, 0);
-	BlarbVM_WORD valueIndex = BlarbVM_peekOnStack(vm, 1);
+	const BlarbVM_WORD heapAddressIndex = BlarbVM_peekOnStack(vm, 0);
+	const BlarbVM_WORD valueIndex = BlarbVM_peekOnStack(vm, 1);
 
-	BlarbVM_WORD heapAddress = BlarbVM_peekOnStack(vm, heapAddressIndex);
-	BlarbVM_WORD value = BlarbVM_peekOnStack(vm, valueIndex);
+	BlarbVM_WORD heapAddress = (BlarbVM_WORD)vm->heap + BlarbVM_peekOnStack(vm, heapAddressIndex);
+	const BlarbVM_WORD value = BlarbVM_peekOnStack(vm, valueIndex);
 
-    char old_value = *((char *)heapAddress);
+    const char old_value = *((char *)heapAddress);
 	// Set the value in memory
 	*((char *)heapAddress) = value;
     BlarbVM_setOnStack(vm, valueIndex, old_value);
@@ -262,26 +286,26 @@ void BlarbVM_execute(BlarbVM *vm) {
 }
 
 void BlarbVM_dumpDebug(BlarbVM *vm) {
-	int i;
+	unsigned long i;
 
 	fprintf(stderr, "\nBeginning BlarbVM dump:\n");
 
 	fprintf(stderr, "\nRegisters:\n");
 	for (i = 0; i < sizeof(vm->registers) / sizeof(BlarbVM_WORD); i++) {
 		BlarbVM_WORD value = vm->registers[i];
-		fprintf(stderr, "%d: %08x \n", i, value);
+		fprintf(stderr, "%lu: %08x \n", i, value);
 	}
 	fprintf(stderr, "\nStack:\n");
 
 	for (i = 0; i < vm->stack_top; i++) {
 		BlarbVM_WORD value = vm->stack[i];
-		fprintf(stderr, "%d: %08x\n", i, value);
+		fprintf(stderr, "%lu: %08x\n", i, value);
 	}
 
 	fprintf(stderr, "\nHeap (%d):\n", vm->heapSize);
 	for (i = 0; i < vm->heapSize; i++) {
 		char byteValue = ((char*)vm->heap)[i];
-		fprintf(stderr, "%08x: %08x\n", (size_t)vm->heap + i, byteValue);
+		fprintf(stderr, "%08x: %08x\n", i, byteValue);
 	}
 
 	fprintf(stderr, "\nDump complete.\n\n");
@@ -300,7 +324,7 @@ void BlarbVM_destroy(BlarbVM *vm) {
 		BlarbVM_popFromStack(vm);
 	}
 
-	for (int i = 0; i < vm->lineCount; i++) {
+	for (BlarbVM_WORD i = 0; i < vm->lineCount; i++) {
 		free(vm->lines[i]);
 	}
 	free(vm->lines);
