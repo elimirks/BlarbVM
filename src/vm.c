@@ -107,54 +107,53 @@ size_t BlarbVM_exit(BlarbVM *vm, size_t exitCode) {
 }
 
 size_t BlarbVM_performSyscall(BlarbVM_WORD num,
-                              BlarbVM_WORD arg1, BlarbVM_WORD arg2,
-                              BlarbVM_WORD arg3, BlarbVM_WORD arg4,
-                              BlarbVM_WORD arg5, BlarbVM_WORD arg6) {
+                              BlarbVM_WORD arg0, BlarbVM_WORD arg1,
+                              BlarbVM_WORD arg2, BlarbVM_WORD arg3,
+                              BlarbVM_WORD arg4, BlarbVM_WORD arg5) {
 	size_t ret;
-	if ((ret = syscall(num, arg1, arg2, arg3, arg4, arg5, arg6)) == (size_t)-1) {
+	if ((ret = syscall(num, arg0, arg1, arg2, arg3, arg4, arg5)) == (size_t)-1) {
 		fprintf(stderr, "Syscall args: %lu, %lu, %lu, %lu, %lu, %lu, %lu\n",
-                num, arg1, arg2, arg3, arg4, arg5, arg6);
+                num, arg0, arg1, arg2, arg3, arg4, arg5);
 		perror("syscall");
 	}
 	return ret;
 }
 
+void BlarbVM_translateArgs(BlarbVM *vm, BlarbVM_WORD num, BlarbVM_WORD *args) {
+    const BlarbVM_WORD heapAddr = (BlarbVM_WORD)vm->heap;
+    
+    for (int i = 0; i < 6; i++) {
+        if (SYSCALL_POINTER_TABLE[num][i]) {
+            args[i] += heapAddr;
+        }
+    }
+}
+
 size_t BlarbVM_systemCallFromStack(BlarbVM *vm) {
-	BlarbVM_WORD arg[7];
-	arg[0] = BlarbVM_popFromStack(vm);
-	arg[1] = BlarbVM_popFromStack(vm);
-	arg[2] = BlarbVM_popFromStack(vm);
-	arg[3] = BlarbVM_popFromStack(vm);
-	arg[4] = BlarbVM_popFromStack(vm);
-	arg[5] = BlarbVM_popFromStack(vm);
-	arg[6] = BlarbVM_popFromStack(vm);
-
-    // TODO: Intercept more...
-    // Specifically, with syscalls that use memory addresses.
-    // This should be delegated to a syscall C file. That way, it will be easy to map multi-platform.
-
-    const size_t heapAddr = (size_t)vm->heap;
+	const BlarbVM_WORD num = BlarbVM_popFromStack(vm);
+	BlarbVM_WORD args[6];
+	args[0] = BlarbVM_popFromStack(vm);
+	args[1] = BlarbVM_popFromStack(vm);
+	args[2] = BlarbVM_popFromStack(vm);
+	args[3] = BlarbVM_popFromStack(vm);
+	args[4] = BlarbVM_popFromStack(vm);
+	args[5] = BlarbVM_popFromStack(vm);
 
     // Refer to http://blog.rchapman.org/posts/Linux_System_Call_Table_for_x86_64/
     // Many syscalls must map the virtual Blarb addresses to real VM heap address
-    // Note: This is currently an incomplete list.
-    switch (arg[0]) {
-    case 0:
-    case 1:
-        return BlarbVM_performSyscall(arg[0], arg[1], arg[2] + heapAddr, arg[3], 0, 0, 0);
-    case 2:
-        return BlarbVM_performSyscall(arg[0], arg[1] + heapAddr, arg[2], arg[3], 0, 0, 0);
+    switch (num) {
     case 12:
-        return BlarbVM_brk(vm, arg[1]);
+        return BlarbVM_brk(vm, args[0]);
     case 60:
-        return BlarbVM_exit(vm, arg[1]);
+        return BlarbVM_exit(vm, args[0]);
     default:
-        return BlarbVM_performSyscall(arg[0], arg[1], arg[2], arg[3], arg[4], arg[5], arg[6]);
+        BlarbVM_translateArgs(vm, num, args);
+        return BlarbVM_performSyscall(num, args[0], args[1], args[2], args[3], args[4], args[5]);
     }
 }
 
 void BlarbVM_setHeapValueFromStack(BlarbVM *vm) {
-	const BlarbVM_WORD heapAddressIndex = BlarbVM_peekOnStack(vm, 0);
+    const BlarbVM_WORD heapAddressIndex = BlarbVM_peekOnStack(vm, 0);
 	const BlarbVM_WORD valueIndex = BlarbVM_peekOnStack(vm, 1);
 
 	BlarbVM_WORD heapAddress = (BlarbVM_WORD)vm->heap + BlarbVM_peekOnStack(vm, heapAddressIndex);

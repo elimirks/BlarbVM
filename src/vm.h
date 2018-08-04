@@ -9,6 +9,9 @@ typedef size_t BlarbVM_WORD;
 
 #define BLARB_STACK_SIZE (16384)
 
+// A massive lookup table for virtual memory
+extern int SYSCALL_POINTER_TABLE[329][6];
+
 // Token types
 typedef enum {
     // Note: There are no strings, since they are parsed while scanning
