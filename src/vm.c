@@ -328,19 +328,19 @@ void BlarbVM_dumpDebug(BlarbVM *vm) {
 	fprintf(stderr, "\nRegisters:\n");
 	for (i = 0; i < sizeof(vm->registers) / sizeof(BlarbVM_WORD); i++) {
 		BlarbVM_WORD value = vm->registers[i];
-		fprintf(stderr, "%lu: %08x \n", i, value);
+		fprintf(stderr, "%lu: %lx \n", i, value);
 	}
 	fprintf(stderr, "\nStack:\n");
 
 	for (i = 0; i < vm->stack_top; i++) {
 		BlarbVM_WORD value = vm->stack[i];
-		fprintf(stderr, "%lu: %08x\n", i, value);
+		fprintf(stderr, "%lu: %lx\n", i, value);
 	}
 
-	fprintf(stderr, "\nHeap (%d):\n", vm->heapSize);
+	fprintf(stderr, "\nHeap (%lu):\n", vm->heapSize);
 	for (i = 0; i < vm->heapSize; i++) {
 		char byteValue = ((char*)vm->heap)[i];
-		fprintf(stderr, "%08x: %08x\n", i, byteValue);
+		fprintf(stderr, "%lx: %08x\n", i, byteValue);
 	}
 
 	fprintf(stderr, "\nDump complete.\n\n");

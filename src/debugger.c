@@ -5,7 +5,7 @@
 void help();
 int hit_breakpoint(BlarbVM *vm, int bpc);
 void list_breakpoints(int bpc);
-void push_breakpoint(int *bpc, int bp);
+void push_breakpoint(int *bpc, BlarbVM_WORD bp);
 
 /**
  * Executes the given command, interactively.
@@ -13,7 +13,7 @@ void push_breakpoint(int *bpc, int bp);
 void exec_command(BlarbVM *vm, char *command, size_t len);
 
 #define MAX_BREAKPOINTS (256)
-static int breakpoints[MAX_BREAKPOINTS];
+static BlarbVM_WORD breakpoints[MAX_BREAKPOINTS];
 
 #define INPUT_BUFFER_LEN (1024)
 static char input_buffer[INPUT_BUFFER_LEN];
@@ -64,7 +64,7 @@ void BlarbVM_debugger(BlarbVM *vm) {
                 printf("Exit status: %d\n", (unsigned char)vm->exitCode);
             }
         } else if (strncmp(input_buffer, "break", INPUT_BUFFER_LEN) == 0) {
-            int line = atoi(&input_buffer[6]);
+            BlarbVM_WORD line = atoi(&input_buffer[6]);
 
             if (breakpoint_count == MAX_BREAKPOINTS - 1) {
                 printf("Too many breakpoints :(\n");
@@ -99,7 +99,7 @@ void help() {
            "\n");
 }
 
-void push_breakpoint(int *bpc, int bp) {
+void push_breakpoint(int *bpc, BlarbVM_WORD bp) {
     breakpoints[*bpc] = bp;
     (*bpc)++;
 }
@@ -107,7 +107,7 @@ void push_breakpoint(int *bpc, int bp) {
 void list_breakpoints(int bpc) {
     printf("Breakpoints:\n");
     for (int i = 0; i < bpc; i++) {
-        printf("%d\n", breakpoints[i]);
+        printf("%lu\n", breakpoints[i]);
     }
 }
 
