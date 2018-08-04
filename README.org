@@ -36,13 +36,13 @@
 *** Store Register
     ~a b \~~ Store the value at index a in register b
 *** Get Register
-    ~a $~ Push register a onto the stack
+    ~a$~ Push register a onto the stack
 *** Pop from Stack
-    ~a ^~ pop ~a~ elements
+    ~a^~ pop ~a~ elements
 *** Conditional
-    ~a ?~ if index a is true (non-zero), execute the rest of the line
+    ~a?~ if index a is true (non-zero), execute the rest of the line
 *** Include File
-    ~"filename.blarb" @~ Include the given file. Duplicates will be ignored.
+    ~"filename.blarb"@~ Include the given file. Duplicates will be ignored.
 *** System Calls
     ~f e d c b a syscallnum %~ Execute the system call with the given args
     
@@ -115,62 +115,74 @@
 
   As of writing this document, the standard library includes:
   
-  |------------------+-------+-------------------------------------------------|
-  | Function         | Args  | Description                                     |
-  |------------------+-------+-------------------------------------------------|
-  | nandi            | A B   | Bitwise NANDs the two top items on the stack    |
-  |------------------+-------+-------------------------------------------------|
-  | andi             | A B   | Bitwise ANDs the two top items on the stack     |
-  |------------------+-------+-------------------------------------------------|
-  | noti             | A     | Bitwise NOTs the top item on the stack          |
-  |------------------+-------+-------------------------------------------------|
-  | ori              | A B   | Bitwise ORs the top two items on the stack      |
-  |------------------+-------+-------------------------------------------------|
-  | xori             | A B   | Bitwise XORs the top two items on the stack     |
-  |------------------+-------+-------------------------------------------------|
-  | lshiftilone      | A     | Bit shifts the top item left left by one bit    |
-  |------------------+-------+-------------------------------------------------|
-  | addi             | A B   | Adds the top two elements on the stack          |
-  |------------------+-------+-------------------------------------------------|
-  | subi             | A B   | Subtracts B from A (A - B)                      |
-  |------------------+-------+-------------------------------------------------|
-  | seti             | V I   | Set's the word on the stack at                  |
-  |                  |       | index I to value V                              |
-  |------------------+-------+-------------------------------------------------|
-  | copy             | I     | Copy the element at stack index I               |
-  |------------------+-------+-------------------------------------------------|
-  | swap             | A B   | Swap the element at indices A and B             |
-  |------------------+-------+-------------------------------------------------|
-  | lshiftil         | A B   | Shift A left by B bits                          |
-  |------------------+-------+-------------------------------------------------|
-  | iseqi            | A B   | Checks if A is equal to B.                      |
-  |                  |       | Returns 1 if true, 0 if false.                  |
-  |------------------+-------+-------------------------------------------------|
-  | pushbytetoheapi  | A     | Pushes a _BYTE_ to the heap.                    |
-  |                  |       | Returns the address of the byte.                |
-  |------------------+-------+-------------------------------------------------|
-  | stackstrlen      | A     | Push the length of the string at                |
-  |                  |       | stack position A to the stack.                  |
-  |------------------+-------+-------------------------------------------------|
-  | print            | A B   | Prints the string at index A of length B        |
-  |------------------+-------+-------------------------------------------------|
-  | printline        | S     | Prints a null terminated string S, with a       |
-  |                  |       | newline character.                              |
-  |------------------+-------+-------------------------------------------------|
-  | readchar         | D     | Reads a single character from descriptor D.     |
-  |------------------+-------+-------------------------------------------------|
-  | pushstringtoheap | I     | Pushes the string at index I to the heap.       |
-  |                  |       | Retruns the memory address of the string on the |
-  |------------------+-------+-------------------------------------------------|
-  | openwithname     | S F M | Opens the file of the null terminated string S. |
-  |                  |       | F are the open syscall flags, M is the mode.    |
-  |                  |       | See the open syscall docs for more information. |
-  |                  |       | Returns the file descriptor number              |
-  |------------------+-------+-------------------------------------------------|
-  | closedescriptor  | A     | Closes file descriptor A                        |
-  |------------------+-------+-------------------------------------------------|
-  | exit             | C     | Terminates your program with status code C      |
-  |------------------+-------+-------------------------------------------------|
+  |---------------------+-------+-------------------------------------------------|
+  | Function            | Args  | Description                                     |
+  |---------------------+-------+-------------------------------------------------|
+  | nandi               | A B   | Bitwise NANDs the two top items on the stack.   |
+  |---------------------+-------+-------------------------------------------------|
+  | andi                | A B   | Bitwise ANDs the two top items on the stack.    |
+  |---------------------+-------+-------------------------------------------------|
+  | noti                | A     | Bitwise NOTs the top item on the stack.         |
+  |---------------------+-------+-------------------------------------------------|
+  | ori                 | A B   | Bitwise ORs the top two items on the stack.     |
+  |---------------------+-------+-------------------------------------------------|
+  | xori                | A B   | Bitwise XORs the top two items on the stack.    |
+  |---------------------+-------+-------------------------------------------------|
+  | lshiftilone         | A     | Bit shifts the top item left left by one bit.   |
+  |---------------------+-------+-------------------------------------------------|
+  | addi                | A B   | Adds the top two elements on the stack.         |
+  |---------------------+-------+-------------------------------------------------|
+  | subi                | A B   | Subtracts B from A (A - B).                     |
+  |---------------------+-------+-------------------------------------------------|
+  | multiplyi           | A B   | Multiplies the top two elements on the stack.   |
+  |---------------------+-------+-------------------------------------------------|
+  | seti                | V I   | Set's the word on the stack at                  |
+  |                     |       | index I to value V.                             |
+  |---------------------+-------+-------------------------------------------------|
+  | copy                | I     | Copy the element at stack index I.              |
+  |---------------------+-------+-------------------------------------------------|
+  | swap                | A B   | Swap the element at indices A and B.            |
+  |---------------------+-------+-------------------------------------------------|
+  | lshiftil            | A B   | Shift A left by B bits.                         |
+  |---------------------+-------+-------------------------------------------------|
+  | iseqi               | A B   | Checks if A is equal to B.                      |
+  |                     |       | Returns 1 if true, 0 if false.                  |
+  |---------------------+-------+-------------------------------------------------|
+  | isgei               | A B   | Checks if A >= B.                               |
+  |---------------------+-------+-------------------------------------------------|
+  | tobooli             | A     | Returns A as a boolean (1 or 0).                |
+  |---------------------+-------+-------------------------------------------------|
+  | pushbytetoheapi     | A     | Pushes a _BYTE_ to the heap.                    |
+  |                     |       | Returns the address of the byte.                |
+  |---------------------+-------+-------------------------------------------------|
+  | pushbytearraytoheap | I L   | Copy array of length L at index I to the heap.  |
+  |                     |       | Returns the initial array index breakpoint.     |
+  |---------------------+-------+-------------------------------------------------|
+  | stackstrlen         | A     | Push the length of the string at                |
+  |                     |       | stack position A to the stack.                  |
+  |---------------------+-------+-------------------------------------------------|
+  | print               | A B   | Prints the string at index A of length B.       |
+  |---------------------+-------+-------------------------------------------------|
+  | printline           | S     | Prints a null terminated string S, with a       |
+  |                     |       | newline character.                              |
+  |---------------------+-------+-------------------------------------------------|
+  | readchar            | D     | Reads a single character from descriptor D.     |
+  |---------------------+-------+-------------------------------------------------|
+  | brki                | B     | Sets the new brk address to B. If B is 0,       |
+  |                     |       | the current brk will be returned.               |
+  |---------------------+-------+-------------------------------------------------|
+  | pushstringtoheap    | I     | Pushes the string at index I to the heap.       |
+  |                     |       | Retruns the memory address of the string.       |
+  |---------------------+-------+-------------------------------------------------|
+  | openwithname        | S F M | Opens the file of the null terminated string S. |
+  |                     |       | F are the open syscall flags, M is the mode.    |
+  |                     |       | See the open syscall docs for more information. |
+  |                     |       | Returns the file descriptor number.             |
+  |---------------------+-------+-------------------------------------------------|
+  | closedescriptor     | A     | Closes file descriptor A                        |
+  |---------------------+-------+-------------------------------------------------|
+  | exit                | C     | Terminates your program with status code C      |
+  |---------------------+-------+-------------------------------------------------|
 * Syntax Highlighting
   See the [[https://github.com/elimirks/BlarbVM/tree/master/editors][editors]] directory for some syntax highlighting plugins. Currently there are only Vim and Emacs plugins.
 * Examples

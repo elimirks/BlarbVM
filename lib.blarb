@@ -27,6 +27,9 @@
 
 ;5 0$brki
 
+;1284 3487 0$multiplyi
+;40 2 0$isgei
+
 0 0$exit
 
 
@@ -102,7 +105,7 @@
     69 1 ~ 1$ ; Copy of the param
 
     #lshiftiloneloop
-    3 ? lshiftilonerun
+    3? lshiftilonerun
     ; At this point, there will just be 0,1,<returnvalue> on the stack
     2 1 ~
     5 0 ~ 5^ 1$
@@ -195,6 +198,35 @@
 
 
 
+; Multiple two immediate values together
+; Note: This "does not care" about negative numbers
+; This algorithm is trivial.
+; It will add the first number to itself, while decrementing the second number.
+; If the second number starts out at 0, this returns 0, as expected.
+#multiplyi
+    ; A B ReturnAddress
+    0        ; Accumulator (start at 0)
+    3 0$copy ; Decrementor (Copy of second parameter)
+
+    #multiplyicheckfor0
+    1? multiplyiloop
+
+    ; Return the result if the second parameter reaches 0
+    3 1 ~ 4 0 ~ 5^ 1$
+
+    #multiplyiloop
+    1 0$subi ; Subtract from the decrementor.
+
+    5 0$copy ; First param
+    3 0$copy ; Accumulator
+    0$addi   ; Add them
+    
+    3 0$seti ; Set the accumulator to the result
+    
+    multiplyicheckfor0
+
+
+
 ; Usage: index copy
 ; Copies the word on the stack at "index" to the top of the stack
 #copy
@@ -266,6 +298,20 @@
     0$xori
     1? 3 0 ~ 4^ 0
     3 0 ~ 4^ 1
+
+
+
+; Checks if A >= B
+#isgei
+    3 0$copy
+    3 0$copy
+    0$subi
+
+    ; Check if the highest bit is set (if the result is negative)
+    9223372036854775808 0$andi
+
+    1? 3 0 ~ 4^ 0 ; Return 0
+    3 0 ~ 4^ 1    ; Return 1
 
 
 
