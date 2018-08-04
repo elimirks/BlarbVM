@@ -63,7 +63,7 @@ void BlarbVM_debugger(BlarbVM *vm) {
             } else {
                 printf("Exit status: %d\n", (unsigned char)vm->exitCode);
             }
-        } else if (strncmp(input_buffer, "break", INPUT_BUFFER_LEN) == 0) {
+        } else if (strncmp(input_buffer, "break", 5) == 0) {
             BlarbVM_WORD line = atoi(&input_buffer[6]);
 
             if (breakpoint_count == MAX_BREAKPOINTS - 1) {
