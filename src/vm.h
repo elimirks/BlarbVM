@@ -68,8 +68,20 @@ void BlarbVM_pushToStack(BlarbVM *vm, BlarbVM_WORD value);
  */
 void BlarbVM_pushStackArg(BlarbVM *vm, const char *s);
 
-void BlarbVM_step(BlarbVM *vm); // Steps through a single line of blarb
+/**
+ * Steps through a single line of blarb
+ */
+void BlarbVM_step(BlarbVM *vm);
+
+/**
+ * Continues running the VM.
+ */
 void BlarbVM_execute(BlarbVM *vm);
+
+/**
+ * Executes a single given line
+ */
+void BlarbVM_executeLine(BlarbVM *vm, token *line);
 
 /**
  * Dump a VM trace.
@@ -81,11 +93,22 @@ void BlarbVM_dumpDebug(BlarbVM *vm);
  * Create a new VM.
  */
 void BlarbVM_init(BlarbVM *vm);
+
 /**
  * Destroy an existing VM.
  */
 void BlarbVM_destroy(BlarbVM *vm);
 
+/**
+ * Scans a line into tokens.
+ *
+ * Make sure you set yyin before calling this!
+ */
+token * BlarbVM_scanLine(BlarbVM *vm);
+
+/**
+ * Loads a blarb file into the VM, to be run. Can be dynamic.
+ */
 void BlarbVM_loadFile(BlarbVM *vm, char *fileName);
 
 /**

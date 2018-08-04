@@ -7,6 +7,11 @@ int hit_breakpoint(BlarbVM *vm, int bpc);
 void list_breakpoints(int bpc);
 void push_breakpoint(int *bpc, int bp);
 
+/**
+ * Executes the given command, interactively.
+ */
+void exec_command(BlarbVM *vm, char *command, size_t len);
+
 #define MAX_BREAKPOINTS (256)
 static int breakpoints[MAX_BREAKPOINTS];
 
@@ -70,6 +75,10 @@ void BlarbVM_debugger(BlarbVM *vm) {
             break;
         } else if (strncmp(input_buffer, "nands", INPUT_BUFFER_LEN) == 0) {
             printf("NANDs performed: %lu\n", vm->nandCount);
+        } else if (strncmp(input_buffer, "exec ", 5) == 0) {
+            char *command = &input_buffer[5];
+            printf("Executing `%s`...\n", command);
+            exec_command(vm, command, INPUT_BUFFER_LEN);
         } else if (strlen(input_buffer) > 0) {
             printf("Invalid command: %s\n", input_buffer);
         }
@@ -79,13 +88,14 @@ void BlarbVM_debugger(BlarbVM *vm) {
 void help() {
     printf("Welcome to the Blarb debugger.\n"
            "Available commands:\n"
-           "help:    Show this dialog\n"
-           "run:     Run the program\n"
-           "dump:    Show a Blarb dump\n"
-           "step:    Run a step (a single line)\n"
-           "break n: Set a breakpoint at line 'n'\n"
-           "status:  Get exit status\n"
-           "nands:   Get the amount of NANDS performed\n"
+           "help:       Show this dialog\n"
+           "run:        Run the program\n"
+           "dump:       Show a Blarb dump\n"
+           "step:       Run a step (a single line)\n"
+           "break n:    Set a breakpoint at line 'n'\n"
+           "status:     Get exit status\n"
+           "nands:      Get the amount of NANDS performed\n"
+           "exec <cmd>: Executed the given Blarb command\n"
            "\n");
 }
 
@@ -110,4 +120,31 @@ int hit_breakpoint(BlarbVM *vm, int bpc) {
         }
     }
     return 0;
+}
+
+void exec_command(BlarbVM *vm, char *command, size_t len) {
+    extern FILE *yyin;
+    extern char *yyfilename;
+
+    // Create a temporary in-memory file descriptor, for yylex
+    char *fileContent = malloc(sizeof(char) * len);
+    FILE *fp = fmemopen(fileContent, len + 1, "w+");
+    fprintf(fp, "%s", command);
+    rewind(fp);
+
+    yyin = fp;
+    yyfilename = "bdbexec.blarb";
+
+    token *line = BlarbVM_scanLine(vm);
+
+    if (line == 0) {
+        printf("Nothing to execute.\n");
+    } else {
+        BlarbVM_executeLine(vm, line);
+        free(line);
+    }
+
+    yyin = stdin;
+    fclose(fp);
+    free(fileContent);
 }

@@ -76,7 +76,7 @@ void addStringLiteralToToken(token *t, char *str) {
 }
 
 // Scans a line of tokens using yylex
-token* BlarbVM_scanLine(BlarbVM *vm) {
+token * BlarbVM_scanLine(BlarbVM *vm) {
     int tokenCount = 0;
     // 1024 tokens should be way more than enough.
     token *line = malloc(sizeof(token) * 1024);
