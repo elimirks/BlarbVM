@@ -119,6 +119,7 @@ size_t BlarbVM_performSyscall(BlarbVM_WORD num,
 	return ret;
 }
 
+// Translates memory addresses for syscalls (because virtual memory)
 void BlarbVM_translateArgs(BlarbVM *vm, BlarbVM_WORD num, BlarbVM_WORD *args) {
     const BlarbVM_WORD heapAddr = (BlarbVM_WORD)vm->heap;
     
