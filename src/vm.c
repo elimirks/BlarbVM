@@ -241,6 +241,7 @@ void BlarbVM_executeLine(BlarbVM *vm, token *line) {
 			BlarbVM_popOnStack(vm);
             break;
         case NAND:
+            vm->nandCount++;
 			BlarbVM_nandOnStack(vm);
             break;
         case CONDITION:

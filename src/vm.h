@@ -54,6 +54,8 @@ typedef struct BlarbVM {
 	LabelPointer *labelPointers;
     int running;
     int exitCode;
+    // For fun analytics
+    size_t nandCount;
 } BlarbVM;
 
 void BlarbVM_pushToStack(BlarbVM *vm, BlarbVM_WORD value);

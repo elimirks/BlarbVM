@@ -58,7 +58,7 @@ void BlarbVM_debugger(BlarbVM *vm) {
             } else {
                 printf("Exit status: %d\n", (unsigned char)vm->exitCode);
             }
-        } else if (strncmp(input_buffer, "break", 1) == 0) {
+        } else if (strncmp(input_buffer, "break", INPUT_BUFFER_LEN) == 0) {
             int line = atoi(&input_buffer[6]);
 
             if (breakpoint_count == MAX_BREAKPOINTS - 1) {
@@ -68,6 +68,8 @@ void BlarbVM_debugger(BlarbVM *vm) {
             list_breakpoints(breakpoint_count);
         } else if (strlen(input_buffer) == 1 && strncmp(input_buffer, "q", 1) == 0) {
             break;
+        } else if (strncmp(input_buffer, "nands", INPUT_BUFFER_LEN) == 0) {
+            printf("NANDs performed: %lu\n", vm->nandCount);
         } else if (strlen(input_buffer) > 0) {
             printf("Invalid command: %s\n", input_buffer);
         }
@@ -83,6 +85,7 @@ void help() {
            "step:    Run a step (a single line)\n"
            "break n: Set a breakpoint at line 'n'\n"
            "status:  Get exit status\n"
+           "nands:   Get the amount of NANDS performed\n"
            "\n");
 }
 
