@@ -6,6 +6,12 @@
 #include "vm.h"
 #include "main.h"
 
+size_t BlarbVM_exit(BlarbVM *vm, size_t exitCode) {
+    vm->running = 0;
+    vm->exitCode = exitCode;
+    return 0;
+}
+
 void BlarbVM_pushToStack(BlarbVM *vm, BlarbVM_WORD value) {
 	if (vm->stack_top == BLARB_STACK_SIZE - 1) {
         fprintf(stderr, "Blarb Stack Overflow!\n");
@@ -74,17 +80,51 @@ void BlarbVM_setRegisterFromStack(BlarbVM *vm) {
 	BlarbVM_popFromStack(vm);
 }
 
+/*
+ * Note: I know I know, I should really be using a set.
+ * ... but a lookup table is good enough for now.
+ * I don't want to worry about premature optimizations :)
+ */
+int BlarbVM_shouldLoadFileName(BlarbVM *vm, char *fileName, size_t len) {
+    // Ignore duplicates
+    for (size_t i = 0; i < vm->loadedFileNameCount; i++) {
+        if (strncmp(fileName, vm->loadedFileNames[i], len) == 0) {
+            return 0;
+        }
+    }
+
+    // Add the file to the list.
+
+    vm->loadedFileNameCount++;
+    vm->loadedFileNames = realloc(vm->loadedFileNames, vm->loadedFileNameCount);
+
+    char **new = &vm->loadedFileNames[vm->loadedFileNameCount - 1];
+    *new = malloc(len);
+    strncpy(*new, fileName, len);
+
+    return 1;
+}
+
 void BlarbVM_includeFileOnStack(BlarbVM *vm) {
-	char fileName[256];
+	char fileName[512];
 	size_t size = 0;
 
 	char c;
 	while ((c = (char)BlarbVM_popFromStack(vm))) {
 		fileName[size++] = c;
+
+        if (size > sizeof(fileName) - 2) {
+            fprintf(stderr, "Make include file name length is %lu.",
+                    sizeof(fileName));
+            BlarbVM_exit(vm, 1);
+            return;
+        }
 	}
 	fileName[size] = '\0';
 
-	BlarbVM_loadFile(vm, fileName);
+    if (BlarbVM_shouldLoadFileName(vm, fileName, size + 1)) {
+        BlarbVM_loadFile(vm, fileName);
+    }
 }
 
 size_t BlarbVM_brk(BlarbVM *vm, size_t newEnd) {
@@ -98,12 +138,6 @@ size_t BlarbVM_brk(BlarbVM *vm, size_t newEnd) {
         vm->heap = realloc(vm->heap, vm->heapSize);
     }
     return vm->heapSize;
-}
-
-size_t BlarbVM_exit(BlarbVM *vm, size_t exitCode) {
-    vm->running = 0;
-    vm->exitCode = exitCode;
-    return 0;
 }
 
 size_t BlarbVM_performSyscall(BlarbVM_WORD num,
@@ -318,6 +352,7 @@ void BlarbVM_init(BlarbVM *vm) {
     vm->stack_top = 0;
     vm->exitCode = 0;
     vm->running = 1;
+    vm->loadedFileNameCount = 0;
 }
 
 void BlarbVM_destroy(BlarbVM *vm) {

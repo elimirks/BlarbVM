@@ -59,6 +59,9 @@ typedef struct BlarbVM {
     int exitCode;
     // For fun analytics
     size_t nandCount;
+    // To keep track of loaded files. It shouldn't include twice!
+    char **loadedFileNames;
+    size_t loadedFileNameCount;
 } BlarbVM;
 
 void BlarbVM_pushToStack(BlarbVM *vm, BlarbVM_WORD value);

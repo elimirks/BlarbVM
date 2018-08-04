@@ -42,7 +42,7 @@
 *** Conditional
     ~a ?~ if index a is true (non-zero), execute the rest of the line
 *** Include File
-    ~"filename.blarb" @~ Include the given file 
+    ~"filename.blarb" @~ Include the given file. Duplicates will be ignored.
 *** System Calls
     ~f e d c b a syscallnum %~ Execute the system call with the given args
     
