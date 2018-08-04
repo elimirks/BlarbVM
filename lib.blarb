@@ -23,7 +23,7 @@
 ;"test.txt" 0 0 0$openwithname
 ;0$closedescriptor
 
-0 0$readchar ; Reads a single character from stdin
+;0 0$readchar ; Reads a single character from stdin
 
 ;5 0$brki
 
@@ -37,15 +37,15 @@
     4 3 ! ; A NAND B
     4 4 !
 
-    2 0 ~ 2 ^ ; Pop the stack frame
+    2 0 ~ 2^ ; Pop the stack frame
 
 
 
 ; NANDs the two immediate values
 #nandi
-    4 3 !         ; Nand it up
-    2 1 ~ 2 ^ 1 $ ; Get rid of extra argument
-    2 0 ~ 1 ^     ; return
+    4 3 !       ; Nand it up
+    2 1 ~ 2^ 1$ ; Get rid of extra argument
+    2 0 ~ 1^    ; return
 
 
 
@@ -53,7 +53,7 @@
 ; Circuit: A NAND A
 #noti
     3 3 ! ; NAND the arg with itself
-    2 0 ~ 1 ^
+    2 0 ~ 1^
 
 
 
@@ -63,7 +63,7 @@
     4 4 !
     3 3 !
     4 3 !
-    2 0 ~ 2 ^
+    2 0 ~ 2^
 
 
 
@@ -71,18 +71,18 @@
 ; Circuit: (A NAND B) AND (A OR B)
 ; I wrote this guy without pure NANDs for sanity reasons
 #xori
-    4 1 ~ 1 $ ; Copy A and B
-    4 1 ~ 1 $
+    4 1 ~ 1$ ; Copy A and B
+    4 1 ~ 1$
     0$nandi
 
-    5 1 ~ 1 $ ; Copy A and B again
-    5 1 ~ 1 $
+    5 1 ~ 1$ ; Copy A and B again
+    5 1 ~ 1$
     0$ori
 
     0$andi
 
-    2 1 ~ 1 ^ ; Pop n' store
-    2 0 ~ 3 ^ 1 $ ; Return the stored result
+    2 1 ~ 1^    ; Pop n' store
+    2 0 ~ 3^ 1$ ; Return the stored result
 
 
 
@@ -99,34 +99,34 @@
     288230376151711744 576460752303423488 1152921504606846976 2305843009213693952
     4611686018427387904 9223372036854775808 0
 
-    69 1 ~ 1 $ ; Copy of the param
+    69 1 ~ 1$ ; Copy of the param
 
     #lshiftiloneloop
     3 ? lshiftilonerun
     ; At this point, there will just be 0,1,<returnvalue> on the stack
     2 1 ~
-    5 0 ~ 5 ^ 1 $
+    5 0 ~ 5^ 1$
 
     #lshiftilonerun
 
     ;0 1 2 4 .. 128 0 value
 
     ; Check if the bit is set (a new boolean will be on the stack)
-    2 1 ~ 1 $
-    5 1 ~ 1 $
+    2 1 ~ 1$
+    5 1 ~ 1$
     0$andi
 
     ; Copy the mutating return value
-    3 1 ~ 1 $
+    3 1 ~ 1$
 
-    6 1 ~ 1 $ 0$noti ; Invert the next single bit mask
+    6 1 ~ 1$ 0$noti ; Invert the next single bit mask
     0$andi ; unset the next bit
 
     ; Set the next bit if the above boolean is true
-    2 ? 5 1 ~ 1 $ 0$ori
+    2? 5 1 ~ 1$ 0$ori
 
     ; Pop n drop!
-    2 1 ~ 4 ^ 1 $
+    2 1 ~ 4^ 1$
 
     lshiftiloneloop
 
@@ -140,8 +140,8 @@
     3 0$copy
     0$tobooli
     1 0$xori
-    1 ? 4 0 ~ 3 1 ~ 5 ^ 1 $
-    1 ^
+    1? 4 0 ~ 3 1 ~ 5^ 1$
+    1^
 
     ; Recursive case - shift and recurse!
 
@@ -153,7 +153,7 @@
 
     0$lshiftil
 
-    3 0 ~ 2 1 ~ 4 ^ 1 $
+    3 0 ~ 2 1 ~ 4^ 1$
 
 
 
@@ -162,22 +162,22 @@
     ; Base case: If the param B is 0, return param A by itself.
     3 1 ~ 1 $ 0$tobooli
     1 0$xori ; negate the boolean
-    1 ? 3 0 ~ 3 ^ ; return A
-    1 ^ ; Pop the above conditional boolean
+    1? 3 0 ~ 3^ ; return A
+    1^ ; Pop the above conditional boolean
 
-    4 1 ~ 1 $ ; Copy A and B
-    4 1 ~ 1 $
+    4 1 ~ 1$ ; Copy A and B
+    4 1 ~ 1$
     0$xori ; sum
 
-    5 1 ~ 1 $ ; Copy A and B again
-    5 1 ~ 1 $
+    5 1 ~ 1$ ; Copy A and B again
+    5 1 ~ 1$
     0$andi ; carry
     0$lshiftilone
 
     0$addi ; Recurse!
 
     2 1 ~
-    3 0 ~ 4 ^ 1 $
+    3 0 ~ 4^ 1$
 
 
 
@@ -187,20 +187,20 @@
     3 1 ~ 1 $ 0$noti
     1 0$addi
 
-    5 1 ~ 1 $ ; A
+    5 1 ~ 1$ ; A
     0$addi ; A - B
 
     2 1 ~
-    3 0 ~ 4 ^ 1 $
+    3 0 ~ 4^ 1$
 
 
 
 ; Usage: index copy
 ; Copies the word on the stack at "index" to the top of the stack
 #copy
-    3 1 ~ 1 $ 3 0$addi ; index
+    3 1 ~ 1$ 3 0$addi ; index
     1 ~
-    2 0 ~ 2 ^ 1 $
+    2 0 ~ 2^ 1$
 
 
 
@@ -227,7 +227,7 @@
     3 0$addi
     0$seti
 
-    2 0 ~ 3 ^
+    2 0 ~ 3^
 
 
 
@@ -247,14 +247,14 @@
     1 0$subi
     1 0$copy
     !
-    3 0 ~ 4 ^
+    3 0 ~ 4^
 
 
 
 ; A jumpi -> jump by A lines
 #jumpi
     0$addi
-    2 0 ~ 1 ^
+    2 0 ~ 1^
 
 
 
@@ -264,14 +264,14 @@
     3 0$copy
     3 0$copy
     0$xori
-    1 ? 3 0 ~ 4 ^ 0
-    3 0 ~ 4 ^ 1
+    1? 3 0 ~ 4^ 0
+    3 0 ~ 4^ 1
 
 
 
 #tobooli
-    2 ? 2 0 ~ 2 ^ 1
-    2 0 ~ 2 ^ 0
+    2? 2 0 ~ 2^ 1
+    2 0 ~ 2^ 0
 
 
 
@@ -294,7 +294,7 @@
 
     4 2 = ; Set the heap value to the byte parameter
 
-    3 0 ~ 3 ^
+    3 0 ~ 3^
 
 
 
@@ -317,7 +317,7 @@
     0$subi
 
     2 1 ~
-    3 0 ~ 3 ^ 1 $
+    3 0 ~ 3^ 1$
 
     #stackstrlenrun
     ; Increment the string pointer
@@ -335,7 +335,7 @@
     0$addi
 
     0$brki ; Allocate memory for the byte array
-    1 ^
+    1^
 
     ; New initial breakpoint (it may have changed address)
     0 0$brki
@@ -348,11 +348,11 @@
 
     ; On the stack at this point, just the initial breakpoint.
     ; If L is non-zero, copy the next pointer byte and loop again
-    4 ? pushbytearraytoheaprun
+    4? pushbytearraytoheaprun
     
     ; If L is 0, terminate and return the initial breakpoint.
     3 1 ~
-    4 0 ~ 5 ^ 1 $
+    4 0 ~ 5^ 1$
 
     #pushbytearraytoheaprun
 
@@ -389,7 +389,7 @@
     3 0$addi
 
     ; Swap the stack vars, since the stack index is on the top now
-    2 1 ~ 3 2 ~ 2 ^ 1 $ 2 $
+    2 1 ~ 3 2 ~ 2^ 1$ 2$
 
     ; At this point, INDEX and SIZE should be on the stack
 
@@ -397,7 +397,7 @@
 
     ; Now it's just the heap address - so we return that
     1 2 ~
-    3 0 ~ 3 ^ 1 $
+    3 0 ~ 3^ 1$
 
 
 
@@ -422,7 +422,7 @@
     0$brki ; Deallocate the buffer
     
     3 1 ~
-    5 0 ~ 5 ^ 1 $
+    5 0 ~ 5^ 1$
 
 
 
@@ -440,12 +440,12 @@
     2 1 ~ 3 2 ~
 
     ; Print from the heap
-    0 0 0 1 $ 2 $ 1 1 %
+    0 0 0 1$ 2$ 1 1 %
 
     3 0$copy ; Pointer to the beginning of the string (on the heap)
     0$brki ; Deallocate the string, now that we are done printing.
 
-    6 0 ~ 7 ^
+    6 0 ~ 7^
 
 
 
@@ -459,12 +459,12 @@
 
     ; Print a newline
     10 2 1 0$print
-    1 ^
+    1^
 
     ; Pop the length of the string, plus stack vars, plus null byte
     3 0$addi
     2 1 ~
-    3 0 ~ 1 $ ^
+    3 0 ~ 1$ ^
 
 
 
@@ -489,7 +489,7 @@
     7 0$addi
 
     4 2 ~ ; Store the file descriptor value, so we can return it
-    6 0 ~ ^ 2 $
+    6 0 ~ ^ 2$
 
 
 
@@ -497,9 +497,9 @@
 ; Returns nothing (but really... we should return a status)
 #closedescriptor
     3 1 ~ ; Store the descriptor number for sanity
-    0 0 0 0 0 1 $ 3 %
+    0 0 0 0 0 1$ 3 %
     ; Note: The syscall operater returns a status - we assume it works :)
-    3 0 ~ 3 ^
+    3 0 ~ 3^
 
 
 
