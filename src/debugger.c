@@ -4,8 +4,14 @@
 
 void help();
 int hit_breakpoint(BlarbVM *vm, int bpc);
-void list_breakpoints(int bpc);
-void push_breakpoint(int *bpc, BlarbVM_WORD bp);
+void print_breakpoints(int bpc);
+/**
+ * Pushes a breakpoint if it exists. Pops otherwise.
+ *
+ * @param bpc The break point count.
+ * @param bp  The break to add.
+ */
+void pushpop_breakpoint(int *bpc, BlarbVM_WORD bp);
 
 /**
  * Executes the given command, interactively.
@@ -69,8 +75,10 @@ void BlarbVM_debugger(BlarbVM *vm) {
             if (breakpoint_count == MAX_BREAKPOINTS - 1) {
                 printf("Too many breakpoints :(\n");
             }
-            push_breakpoint(&breakpoint_count, line);
-            list_breakpoints(breakpoint_count);
+            if (line != 0) {
+                pushpop_breakpoint(&breakpoint_count, line);
+            }
+            print_breakpoints(breakpoint_count);
         } else if (strlen(input_buffer) == 1 && strncmp(input_buffer, "q", 1) == 0) {
             break;
         } else if (strncmp(input_buffer, "nands", INPUT_BUFFER_LEN) == 0) {
@@ -99,12 +107,26 @@ void help() {
            "\n");
 }
 
-void push_breakpoint(int *bpc, BlarbVM_WORD bp) {
+void remove_breakpoint(int *bpc, int index) {
+    (*bpc)--;
+    for (int i = index; i < *bpc; i++) {
+        breakpoints[i] = breakpoints[i + 1];
+    }
+}
+
+void pushpop_breakpoint(int *bpc, BlarbVM_WORD bp) {
+    for (int i = 0; i < *bpc; i++) {
+        if (breakpoints[i] == bp) {
+            remove_breakpoint(bpc, i);
+            return;
+        }
+    }
+
     breakpoints[*bpc] = bp;
     (*bpc)++;
 }
 
-void list_breakpoints(int bpc) {
+void print_breakpoints(int bpc) {
     printf("Breakpoints:\n");
     for (int i = 0; i < bpc; i++) {
         printf("%lu\n", breakpoints[i]);
