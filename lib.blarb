@@ -9,7 +9,7 @@
 ;2 2 2 42 3 0$seti
 ;1 2 0$lshiftil ; Should be 4
 ;6 0$rshiftilone
-12 1 0$rshiftil
+;12 1 0$rshiftil
 ;3 4 0$iseqi ; Should be 0
 ;42 0$pushbytetoheapi ; The value "42" should be on the heap
 ;"hello" 1 0$stackstrlen ; Should return 5
@@ -119,7 +119,7 @@
 
 ; A B rshiftil -> A shifted right by B bits
 #rshiftil
-    4 1 ~ 1$ ; Parameter A (the valuet to shift)
+    4 1 ~ 1$ ; Parameter A (the value to shift)
     4 1 ~ 1$ ; Decrementor B
 
     #rshiftilloop
@@ -169,28 +169,22 @@
 
 
 
-; A B lshiftil -> A shifted left by B bits
+; A B lshiftil -> A shifted right by B bits
 #lshiftil
-    3 0$copy ; A
+    4 1 ~ 1$ ; Parameter A (the value to shift)
+    4 1 ~ 1$ ; Decrementor B
 
-    ; If B is 0, return (base case)
-    3 0$copy
-    0$tobooli
-    1 0$xori
-    1? 4 0 ~ 3 1 ~ 5^ 1$
-    1^
+    #lshiftilloop
+    1? lshiftilrun
+    4 0 ~ 3 1 ~ 5^ 1$ ; Return the value when the decrementor hits 0
+    #lshiftilrun
 
-    ; Recursive case - shift and recurse!
+    1 0$subi ; Decrement
+    ; Perform the shift
+    3 1 ~ 1$ 0$lshiftilone
+    2 1 ~ 3 2 ~ 3^ 1$ 2$
 
-    0$lshiftilone ; Shift A
-
-    ; Decrement B
-    3 0$copy
-    1 0$subi
-
-    0$lshiftil
-
-    3 0 ~ 2 1 ~ 4^ 1$
+    lshiftilloop
 
 
 
