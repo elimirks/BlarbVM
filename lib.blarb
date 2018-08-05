@@ -61,7 +61,7 @@
 
 
 ; ORs the two immediate values
-; Circuit: (A NAND A ) NAND (B NAND B)
+; Circuit: (A NAND A) NAND (B NAND B)
 #ori
     4 4 !
     3 3 !
@@ -72,20 +72,16 @@
 
 ; XORs the two immediate values
 ; Circuit: (A NAND B) AND (A OR B)
-; I wrote this guy without pure NANDs for sanity reasons
 #xori
-    4 1 ~ 1$ ; Copy A and B
-    4 1 ~ 1$
-    0$nandi
+    4 1 ~ 1$ ; Copy A
+    2 4 !    ; A NAND B
 
-    5 1 ~ 1$ ; Copy A and B again
-    5 1 ~ 1$
-    0$ori
+    1$ 5 2 ~ 2$          ; Copy A and B
+    3 3 ! 2 2 ! 3 2 ! 1^ ; A OR B
 
-    0$andi
+    3 2 ! 3 3 ! 1^ ; AND the two values on the stack
 
-    2 1 ~ 1^    ; Pop n' store
-    2 0 ~ 3^ 1$ ; Return the stored result
+    2 1 ~ 3 0 ~ 4^ 1$ ; Return the stored result
 
 
 
@@ -162,22 +158,21 @@
 
 ; Recursive adder
 #addi
+    2? add_continue
     ; Base case: If the param B is 0, return param A by itself.
-    3 1 ~ 1 $ 0$tobooli
-    1 0$xori ; negate the boolean
-    1? 3 0 ~ 3^ ; return A
-    1^ ; Pop the above conditional boolean
+    4 1 ~ 2 0 ~ 3^ 1$
 
+    #add_continue
     4 1 ~ 1$ ; Copy A and B
     4 1 ~ 1$
-    0$xori ; sum
+    0$xori ; "sum" bit's, excluding carries.
 
     5 1 ~ 1$ ; Copy A and B again
     5 1 ~ 1$
-    0$andi ; carry
-    0$lshiftilone
+    0$andi        ; Carry bits
+    0$lshiftilone ; Shift the carry bits before recursing
 
-    0$addi ; Recurse!
+    0$addi ; Recurse, with only the carry bits.
 
     2 1 ~
     3 0 ~ 4^ 1$
@@ -231,8 +226,7 @@
 ; Copies the word on the stack at "index" to the top of the stack
 #copy
     3 1 ~ 1$ 3 0$addi ; index
-    1 ~
-    2 0 ~ 2^ 1$
+    1 ~ 2 0 ~ 2^ 1$
 
 
 
