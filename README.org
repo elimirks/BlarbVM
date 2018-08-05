@@ -128,7 +128,13 @@
   |---------------------+-------+-------------------------------------------------|
   | xori                | A B   | Bitwise XORs the top two items on the stack.    |
   |---------------------+-------+-------------------------------------------------|
-  | lshiftilone         | A     | Bit shifts the top item left left by one bit.   |
+  | lshiftilone         | A     | Bit shifts the top item left by one bit.        |
+  |---------------------+-------+-------------------------------------------------|
+  | lshiftil            | A B   | Shift A left by B bits.                         |
+  |---------------------+-------+-------------------------------------------------|
+  | rshiftilone         | A     | Bit shifts the top item right by one bit.       |
+  |---------------------+-------+-------------------------------------------------|
+  | rshiftil            | A B   | Shift A right by B bits.                        |
   |---------------------+-------+-------------------------------------------------|
   | addi                | A B   | Adds the top two elements on the stack.         |
   |---------------------+-------+-------------------------------------------------|
@@ -142,8 +148,6 @@
   | copy                | I     | Copy the element at stack index I.              |
   |---------------------+-------+-------------------------------------------------|
   | swap                | A B   | Swap the element at indices A and B.            |
-  |---------------------+-------+-------------------------------------------------|
-  | lshiftil            | A B   | Shift A left by B bits.                         |
   |---------------------+-------+-------------------------------------------------|
   | iseqi               | A B   | Checks if A is equal to B.                      |
   |                     |       | Returns 1 if true, 0 if false.                  |
