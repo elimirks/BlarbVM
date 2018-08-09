@@ -118,4 +118,9 @@ void BlarbVM_loadFile(BlarbVM *vm, char *fileName);
  * @param line The line to add - will be free'd in BlarbVM_destroy
  */
 void BlarbVM_addLine(BlarbVM *vm, token *line);
+
+/**
+ * Executes the given syscall number. Refer to the 64 bit linux syscall table.
+ */
+size_t BlarbVM_performSyscall(BlarbVM *vm, BlarbVM_WORD num, BlarbVM_WORD *args);
 #endif

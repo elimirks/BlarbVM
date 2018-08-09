@@ -140,30 +140,6 @@ size_t BlarbVM_brk(BlarbVM *vm, size_t newEnd) {
     return vm->heapSize;
 }
 
-size_t BlarbVM_performSyscall(BlarbVM_WORD num,
-                              BlarbVM_WORD arg0, BlarbVM_WORD arg1,
-                              BlarbVM_WORD arg2, BlarbVM_WORD arg3,
-                              BlarbVM_WORD arg4, BlarbVM_WORD arg5) {
-	size_t ret;
-	if ((ret = syscall(num, arg0, arg1, arg2, arg3, arg4, arg5)) == (size_t)-1) {
-		fprintf(stderr, "Syscall args: %lu, %lu, %lu, %lu, %lu, %lu, %lu\n",
-                num, arg0, arg1, arg2, arg3, arg4, arg5);
-		perror("syscall");
-	}
-	return ret;
-}
-
-// Translates memory addresses for syscalls (because virtual memory)
-void BlarbVM_translateArgs(BlarbVM *vm, BlarbVM_WORD num, BlarbVM_WORD *args) {
-    const BlarbVM_WORD heapAddr = (BlarbVM_WORD)vm->heap;
-    
-    for (int i = 0; i < 6; i++) {
-        if (SYSCALL_POINTER_TABLE[num][i]) {
-            args[i] += heapAddr;
-        }
-    }
-}
-
 size_t BlarbVM_systemCallFromStack(BlarbVM *vm) {
 	const BlarbVM_WORD num = BlarbVM_popFromStack(vm);
 	BlarbVM_WORD args[6];
@@ -182,8 +158,7 @@ size_t BlarbVM_systemCallFromStack(BlarbVM *vm) {
     case 60:
         return BlarbVM_exit(vm, args[0]);
     default:
-        BlarbVM_translateArgs(vm, num, args);
-        return BlarbVM_performSyscall(num, args[0], args[1], args[2], args[3], args[4], args[5]);
+        return BlarbVM_performSyscall(vm, num, args);
     }
 }
 
