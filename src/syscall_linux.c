@@ -1,5 +1,7 @@
 #ifdef __linux__
 #include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include "vm.h"
 
 // Don't worry, I wrote a script to generate this :)
