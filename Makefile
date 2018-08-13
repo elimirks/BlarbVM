@@ -8,7 +8,14 @@ PROJECT = blarb
 SRC_DIR = 'src'
 OBJ_DIR = 'obj'
 
-SRCS = $(shell find $(SRC_DIR) -name '*.c')
+SRCS = src/debugger.c src/main.c src/scanner.c src/vm.c
+
+OS = $(shell uname -s)
+ifeq ($(OS),Darwin)
+  SRCS += src/syscall_macos.c
+else ifeq ($(OS),Linux)
+  SRCS += src/syscall_linux.c
+endif
 
 # Targets
 $(PROJECT): buildrepo compileScanner
