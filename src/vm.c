@@ -29,7 +29,7 @@ BlarbVM_WORD BlarbVM_popFromStack(BlarbVM *vm) {
 }
 
 void BlarbVM_setOnStack(BlarbVM *vm, BlarbVM_WORD index, BlarbVM_WORD value) {
-	if (index < 0 || index >= vm->stack_top) {
+	if (index >= vm->stack_top) {
 		fprintf(stderr, "Tried setting over the stack limit: %lu\n", index);
 		terminateVM();
 	}
@@ -38,7 +38,7 @@ void BlarbVM_setOnStack(BlarbVM *vm, BlarbVM_WORD index, BlarbVM_WORD value) {
 }
 
 BlarbVM_WORD BlarbVM_peekOnStack(BlarbVM *vm, BlarbVM_WORD index) {
-	if (index < 0 || index >= vm->stack_top) {
+	if (index >= vm->stack_top) {
 		fprintf(stderr, "Tried setting over the stack limit: %lu\n", index);
 		terminateVM();
 	}
@@ -129,10 +129,6 @@ void BlarbVM_includeFileOnStack(BlarbVM *vm) {
 
 size_t BlarbVM_brk(BlarbVM *vm, size_t newEnd) {
     if (newEnd) {
-        // If the break point is before the beggining of the heap
-        if (newEnd < 0) {
-            return vm->heapSize; // Do nothing (as per linux brk implementation)
-        }
         // Resize the heap
         vm->heapSize = newEnd;
         vm->heap = realloc(vm->heap, vm->heapSize);
@@ -231,32 +227,32 @@ void BlarbVM_executeLine(BlarbVM *vm, token *line) {
             BlarbVM_pushToStack(vm, line->val);
             break;
         case LABEL_CALL:
-			BlarbVM_jumpToLabel(vm, line->str);
+            BlarbVM_jumpToLabel(vm, line->str);
             // Returning b.c. it should ignore all other tokens on this line
             return;
         case STR:
             BlarbVM_pushStringLiteralToStack(vm, line->str);
             break;
         case INCLUDE:
-			BlarbVM_includeFileOnStack(vm);
+            BlarbVM_includeFileOnStack(vm);
             break;
         case REG_STORE:
-			BlarbVM_setRegisterFromStack(vm);
+            BlarbVM_setRegisterFromStack(vm);
             break;
         case REG_GET:
-			BlarbVM_pushRegisterToStack(vm);
+            BlarbVM_pushRegisterToStack(vm);
             break;
         case STACK_POP:
-			BlarbVM_popOnStack(vm);
+            BlarbVM_popOnStack(vm);
             break;
         case NAND:
             vm->nandCount++;
-			BlarbVM_nandOnStack(vm);
+            BlarbVM_nandOnStack(vm);
             break;
         case CONDITION:
-			if ( ! BlarbVM_conditionalFromStack(vm)) {
-				return;
-			}
+            if ( ! BlarbVM_conditionalFromStack(vm)) {
+                return;
+            }
             break;
         case SYS_CALL:
             {
@@ -265,8 +261,13 @@ void BlarbVM_executeLine(BlarbVM *vm, token *line) {
             }
             break;
         case HEAP_SWAP:
-			BlarbVM_setHeapValueFromStack(vm);
+            BlarbVM_setHeapValueFromStack(vm);
             break;
+        // Ignore these token types
+        case LABEL:
+        case CHR:
+        case NEWLINE:
+          break;
         }
         line++;
     }
