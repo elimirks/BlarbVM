@@ -142,6 +142,9 @@
   |---------------------+-------+-------------------------------------------------|
   | multiplyi           | A B   | Multiplies the top two elements on the stack.   |
   |---------------------+-------+-------------------------------------------------|
+  | dividei             | A B   | Divides the top two elements on the stack.      |
+  |                     |       | The division and remainder are both returned.   |
+  |---------------------+-------+-------------------------------------------------|
   | seti                | V I   | Set's the word on the stack at                  |
   |                     |       | index I to value V.                             |
   |---------------------+-------+-------------------------------------------------|

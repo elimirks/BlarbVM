@@ -29,6 +29,7 @@
 
 ;5 0$brki
 
+;24234 324 0$dividei
 ;1284 3487 0$multiplyi
 ;40 2 0$isgei
 
@@ -252,6 +253,43 @@
     
     multiplyicheckfor0
 
+
+
+; Divieds two given integers. The remainder is returned as a second argument
+; Note: This "does not care" about negative numbers
+; This algorithm is trivial.
+; It will repeatedly decrement the denominator from the numerator.
+; Once the denominator is greater than the numerator, it returns the
+; subtraction count and remainder of the numerator.
+#dividei
+    0 ; Accumulator (how many divisions took place)
+    3 0$copy  ; Denominator (D)
+    5 0$copy  ; Decrementing numerator (N)
+
+    #divideiloop
+
+    ; Is N >= D?
+    1 0$copy
+    3 0$copy
+    0$isgei
+    1? 1^ divideiinc
+    1^
+
+    ; Retrun the division value and remainder
+    4 1 ~ 2 2 ~ 5 0 ~ 7^ 1$ 2$
+
+    #divideiinc
+    ; Subtract denomitorator from decreasing numerator
+    2 0$copy
+    0$subi
+
+    ; Increase the accumulator
+    3 0$copy
+    1 0$addi
+    5 2 0$swap
+    1^
+
+    divideiloop
 
 
 ; Usage: index copy
@@ -577,4 +615,4 @@
 
 #exit
     3 1~
-    0 0 0 0 0 1$ 60 % 4^
+    0 0 0 0 0 1$ 60 % 3^
