@@ -46,6 +46,11 @@ typedef struct LabelPointer {
     UT_hash_handle hh;
 } LabelPointer;
 
+typedef struct LineDebugInfo {
+    char *fileName;
+    BlarbVM_WORD line;
+} LineDebugInfo;
+
 typedef struct BlarbVM {
 	void *heap;
 	size_t heapSize;
@@ -53,6 +58,7 @@ typedef struct BlarbVM {
     BlarbVM_WORD stack_top;
 	BlarbVM_WORD registers[8];
 	token **lines;
+	LineDebugInfo *linesDebug;
 	BlarbVM_WORD lineCount;
 	LabelPointer *labelPointers;
     int running;

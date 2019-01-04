@@ -80,31 +80,6 @@ void BlarbVM_setRegisterFromStack(BlarbVM *vm) {
 	BlarbVM_popFromStack(vm);
 }
 
-/*
- * Note: I know I know, I should really be using a set.
- * ... but a lookup table is good enough for now.
- * I don't want to worry about premature optimizations :)
- */
-int BlarbVM_shouldLoadFileName(BlarbVM *vm, char *fileName, size_t len) {
-    // Ignore duplicates
-    for (size_t i = 0; i < vm->loadedFileNameCount; i++) {
-        if (strncmp(fileName, vm->loadedFileNames[i], len) == 0) {
-            return 0;
-        }
-    }
-
-    // Add the file to the list.
-
-    vm->loadedFileNameCount++;
-    vm->loadedFileNames = realloc(vm->loadedFileNames, vm->loadedFileNameCount);
-
-    char **new = &vm->loadedFileNames[vm->loadedFileNameCount - 1];
-    *new = malloc(len);
-    strncpy(*new, fileName, len);
-
-    return 1;
-}
-
 void BlarbVM_includeFileOnStack(BlarbVM *vm) {
 	char fileName[512];
 	size_t size = 0;
@@ -122,9 +97,7 @@ void BlarbVM_includeFileOnStack(BlarbVM *vm) {
 	}
 	fileName[size] = '\0';
 
-    if (BlarbVM_shouldLoadFileName(vm, fileName, size + 1)) {
-        BlarbVM_loadFile(vm, fileName);
-    }
+    BlarbVM_loadFile(vm, fileName);
 }
 
 size_t BlarbVM_brk(BlarbVM *vm, size_t newEnd) {

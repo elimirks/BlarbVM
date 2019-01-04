@@ -3,6 +3,8 @@
 #include "debugger.h"
 
 void help();
+void print_current_vm_line(BlarbVM *vm);
+void print_loaded_files(BlarbVM *vm);
 int hit_breakpoint(BlarbVM *vm, int bpc);
 void print_breakpoints(int bpc);
 /**
@@ -56,13 +58,12 @@ void BlarbVM_debugger(BlarbVM *vm) {
         } else if (strncmp(input_buffer, "dump", INPUT_BUFFER_LEN) == 0) {
             BlarbVM_dumpDebug(vm);
         } else if (strncmp(input_buffer, "step", INPUT_BUFFER_LEN) == 0) {
-            BlarbVM_WORD lp = vm->registers[0]; // line pointer
-            BlarbVM_step(vm);
             if (vm->running) {
-                printf("Executed line %ld\n", lp);
+                print_current_vm_line(vm);
             } else {
                 printf("Hit end of program.\n");
             }
+            BlarbVM_step(vm);
         } else if (strncmp(input_buffer, "status", INPUT_BUFFER_LEN) == 0) {
             if (vm->running) {
                 printf("VM is still running\n");
@@ -83,6 +84,9 @@ void BlarbVM_debugger(BlarbVM *vm) {
             break;
         } else if (strncmp(input_buffer, "nands", INPUT_BUFFER_LEN) == 0) {
             printf("NANDs performed: %lu\n", vm->nandCount);
+        } else if (strncmp(input_buffer, "files", INPUT_BUFFER_LEN) == 0) {
+            printf("Blarb files loaded:\n");
+            print_loaded_files(vm);
         } else if (strncmp(input_buffer, "exec ", 5) == 0) {
             char *command = &input_buffer[5];
             printf("Executing `%s`...\n", command);
@@ -103,6 +107,7 @@ void help() {
            "break n:    Set a breakpoint at line 'n'\n"
            "status:     Get exit status\n"
            "nands:      Get the amount of NANDS performed\n"
+           "files:      Prints which Blarb files have been loaded\n"
            "exec <cmd>: Executed the given Blarb command\n"
            "\n");
 }
@@ -169,4 +174,16 @@ void exec_command(BlarbVM *vm, char *command, size_t len) {
     yyin = stdin;
     fclose(fp);
     free(fileContent);
+}
+
+void print_loaded_files(BlarbVM *vm) {
+    for (size_t i = 0; i < vm->loadedFileNameCount; i++) {
+        printf("%s\n", vm->loadedFileNames[i]);
+    }
+}
+
+void print_current_vm_line(BlarbVM *vm) {
+    BlarbVM_WORD lp = vm->registers[0]; // line pointer
+    LineDebugInfo *info = &vm->linesDebug[lp];
+    printf("Executed %s:%ld\n", info->fileName, info->line);
 }

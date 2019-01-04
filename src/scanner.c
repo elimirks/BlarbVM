@@ -134,7 +134,57 @@ token * BlarbVM_scanLine(BlarbVM *vm) {
     return realloc(line, sizeof(token) * tokenCount);
 }
 
+void BlarbVM_addLineDebugInfo(BlarbVM *vm, char *fileName) {
+    vm->linesDebug = realloc(vm->linesDebug,
+                             sizeof(LineDebugInfo) * vm->lineCount);
+
+    LineDebugInfo *info = &(vm->linesDebug[vm->lineCount - 1]);
+    info->fileName = fileName;
+    info->line = yylineno - 1;
+}
+
+/*
+ * Note: I know I know, I should really be using a set.
+ * ... but a lookup table is good enough for now.
+ * I don't want to worry about premature optimizations :)
+ */
+int BlarbVM_shouldLoadFileName(BlarbVM *vm, char *fileName) {
+    size_t fileNameLen = strlen(fileName);
+
+    // Ignore duplicates
+    for (size_t i = 0; i < vm->loadedFileNameCount; i++) {
+        if (strncmp(fileName, vm->loadedFileNames[i], fileNameLen) == 0) {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+char * BlarbVM_addFileNameToLoadedFiles(BlarbVM *vm, char *fileName) {
+    size_t fileNameLen = strlen(fileName);
+
+    vm->loadedFileNameCount++;
+    vm->loadedFileNames = realloc(vm->loadedFileNames, vm->loadedFileNameCount);
+
+    char **new  = &vm->loadedFileNames[vm->loadedFileNameCount - 1];
+    *new = malloc(fileNameLen);
+    strncpy(*new, fileName, fileNameLen + 1);
+
+    char *savedFileName = *new;
+    savedFileName[fileNameLen] = '\0';
+
+    return savedFileName;
+}
+
 void BlarbVM_loadFile(BlarbVM *vm, char *fileName) {
+    if ( ! BlarbVM_shouldLoadFileName(vm, fileName)) {
+        return;
+    }
+
+    // Stash away the file name safely in memory
+    fileName = BlarbVM_addFileNameToLoadedFiles(vm, fileName);
+
 	FILE *fp = fopen(fileName, "r");
 	if ( ! fp) {
 		fprintf(stderr, "Failed to open '%s'\n", fileName);
@@ -147,6 +197,7 @@ void BlarbVM_loadFile(BlarbVM *vm, char *fileName) {
 	token *line;
     while ((line = BlarbVM_scanLine(vm))) {
         BlarbVM_addLine(vm, line);
+        BlarbVM_addLineDebugInfo(vm, fileName);
     }
 
     yyin = stdin;
