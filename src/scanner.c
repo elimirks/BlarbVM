@@ -196,6 +196,11 @@ void BlarbVM_loadFile(BlarbVM *vm, char *fileName) {
 
 	token *line;
     while ((line = BlarbVM_scanLine(vm))) {
+        // Ignore blank lines
+        if (line[0].type == NEWLINE) {
+            continue;
+        }
+
         BlarbVM_addLine(vm, line);
         BlarbVM_addLineDebugInfo(vm, fileName);
     }
