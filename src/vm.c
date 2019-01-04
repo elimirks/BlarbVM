@@ -69,6 +69,12 @@ void BlarbVM_pushStringLiteralToStack(BlarbVM *vm, char *line) {
 	}
 }
 
+void BlarbVM_explicitSetRegisterFromStack(BlarbVM *vm, token *t) {
+    BlarbVM_WORD stackIndex = t->vals[0] - 2;
+    BlarbVM_WORD regIndex   = t->vals[1];
+	vm->registers[regIndex] = BlarbVM_peekOnStack(vm, stackIndex);
+}
+
 void BlarbVM_setRegisterFromStack(BlarbVM *vm) {
 	BlarbVM_WORD stackIndex = BlarbVM_peekOnStack(vm, 1);
 	BlarbVM_WORD regIndex = BlarbVM_peekOnStack(vm, 0);
@@ -147,68 +153,86 @@ void BlarbVM_setHeapValueFromStack(BlarbVM *vm) {
 	BlarbVM_popFromStack(vm);
 }
 
+void BlarbVM_explicitPushRegisterToStack(BlarbVM *vm, token *t) {
+    BlarbVM_WORD regIndex = t->val;
+    BlarbVM_WORD regValue = vm->registers[regIndex];
+    BlarbVM_pushToStack(vm, regValue);
+}
+
 void BlarbVM_pushRegisterToStack(BlarbVM *vm) {
-	BlarbVM_WORD regIndex = BlarbVM_peekOnStack(vm, 0);
-	BlarbVM_WORD regValue = vm->registers[regIndex];
+    BlarbVM_WORD regIndex = BlarbVM_peekOnStack(vm, 0);
+    BlarbVM_WORD regValue = vm->registers[regIndex];
 
-	// Pop args
-	BlarbVM_popFromStack(vm);
+    // Pop args
+    BlarbVM_popFromStack(vm);
 
-	BlarbVM_pushToStack(vm, regValue);
+    BlarbVM_pushToStack(vm, regValue);
+}
+
+void BlarbVM_nandIndicesOnStack(BlarbVM *vm, BlarbVM_WORD first,
+                                BlarbVM_WORD second) {
+    vm->nandCount++;
+
+    BlarbVM_WORD firstNandValue  = BlarbVM_peekOnStack(vm, first);
+    BlarbVM_WORD secondNandValue = BlarbVM_peekOnStack(vm, second);
+
+    BlarbVM_WORD result = ~(firstNandValue & secondNandValue);
+    BlarbVM_setOnStack(vm, second, result);
 }
 
 void BlarbVM_explicitNandOnStack(BlarbVM *vm, token *t) {
-    vm->nandCount++;
-
     // Simulate as if the args were on the stack
-    BlarbVM_WORD firstNandIndex  = t->vals[1] - 2;
-    BlarbVM_WORD secondNandIndex = t->vals[0] - 2;
-
-	BlarbVM_WORD firstNandValue = BlarbVM_peekOnStack(vm, firstNandIndex);
-	BlarbVM_WORD secondNandValue = BlarbVM_peekOnStack(vm, secondNandIndex);
-
-	BlarbVM_WORD result = ~(firstNandValue & secondNandValue);
-	BlarbVM_setOnStack(vm, secondNandIndex, result);
+    BlarbVM_WORD first  = t->vals[1] - 2;
+    BlarbVM_WORD second = t->vals[0] - 2;
+    BlarbVM_nandIndicesOnStack(vm, first, second);
 }
 
 void BlarbVM_nandOnStack(BlarbVM *vm) {
-    vm->nandCount++;
+    BlarbVM_WORD first  = BlarbVM_peekOnStack(vm, 0);
+    BlarbVM_WORD second = BlarbVM_peekOnStack(vm, 1);
 
-    BlarbVM_WORD firstNandIndex = BlarbVM_peekOnStack(vm, 0);
-	BlarbVM_WORD secondNandIndex = BlarbVM_peekOnStack(vm, 1);
+    BlarbVM_nandIndicesOnStack(vm, first, second);
 
-	BlarbVM_WORD firstNandValue = BlarbVM_peekOnStack(vm, firstNandIndex);
-	BlarbVM_WORD secondNandValue = BlarbVM_peekOnStack(vm, secondNandIndex);
-
-	BlarbVM_WORD result = ~(firstNandValue & secondNandValue);
-	BlarbVM_setOnStack(vm, secondNandIndex, result);
-
-	// Pop args
-	BlarbVM_popFromStack(vm);
-	BlarbVM_popFromStack(vm);
+    // Pop args
+    BlarbVM_popFromStack(vm);
+    BlarbVM_popFromStack(vm);
 }
 
-// Returns true if the conditional is a success
+// Returns true if the conditional succeeded
+int BlarbVM_explicitConditionalFromStack(BlarbVM *vm, token *line) {
+    BlarbVM_WORD stackIndex = line->val;
+
+    // Special case, in case the blarb program is trying to do useless things.
+    if (stackIndex == 0) {
+        return 0;
+    }
+
+    // Simulate the arg as if it were on the stack 
+    stackIndex--;
+
+    BlarbVM_WORD conditionalValue = BlarbVM_peekOnStack(vm, stackIndex);
+    return conditionalValue != 0;
+}
 int BlarbVM_conditionalFromStack(BlarbVM *vm) {
-	BlarbVM_WORD stackIndex = BlarbVM_peekOnStack(vm, 0);
-	BlarbVM_WORD conditionalValue = BlarbVM_peekOnStack(vm, stackIndex);
-	BlarbVM_popFromStack(vm);
-	return conditionalValue != 0;
+    BlarbVM_WORD stackIndex = BlarbVM_peekOnStack(vm, 0);
+    BlarbVM_WORD conditionalValue = BlarbVM_peekOnStack(vm, stackIndex);
+    BlarbVM_popFromStack(vm);
+    return conditionalValue != 0;
 }
 
 void BlarbVM_explicitPopOnStack(BlarbVM *vm, BlarbVM_WORD popAmount) {
-	while (popAmount >= 1) {
-		if (vm->stack_top == 0) {
-			fprintf(stderr, "Tried popping more stack elements than avalaible\n");
-			terminateVM();
-		}
-		BlarbVM_popFromStack(vm);
-		popAmount--;
-	}
+    while (popAmount >= 1) {
+        if (vm->stack_top == 0) {
+            fprintf(stderr, "Tried popping more stack elements than avalaible\n");
+            terminateVM();
+        }
+        BlarbVM_popFromStack(vm);
+        popAmount--;
+    }
 }
 
 void BlarbVM_popOnStack(BlarbVM *vm) {
-	BlarbVM_WORD popAmount = BlarbVM_popFromStack(vm);
+    BlarbVM_WORD popAmount = BlarbVM_popFromStack(vm);
     BlarbVM_explicitPopOnStack(vm, popAmount);
 }
 
@@ -234,14 +258,28 @@ void BlarbVM_executeLine(BlarbVM *vm, token *line) {
         case REG_GET:
             BlarbVM_pushRegisterToStack(vm);
             break;
+        case EXPLICIT_REG_GET:
+            BlarbVM_explicitPushRegisterToStack(vm, line);
+            break;
         case STACK_POP:
             BlarbVM_popOnStack(vm);
+            break;
+        case EXPLICIT_STACK_POP:
+            BlarbVM_explicitPopOnStack(vm, line->val);
             break;
         case NAND:
             BlarbVM_nandOnStack(vm);
             break;
+        case EXPLICIT_NAND:
+            BlarbVM_explicitNandOnStack(vm, line);
+            break;
         case CONDITION:
             if ( ! BlarbVM_conditionalFromStack(vm)) {
+                return;
+            }
+            break;
+        case EXPLICIT_CONDITION:
+            if ( ! BlarbVM_explicitConditionalFromStack(vm, line)) {
                 return;
             }
             break;
@@ -254,16 +292,10 @@ void BlarbVM_executeLine(BlarbVM *vm, token *line) {
         case HEAP_SWAP:
             BlarbVM_setHeapValueFromStack(vm);
             break;
-        // Ignore these token types
+            // Ignore these token types
         case LABEL:
         case CHR:
         case NEWLINE:
-          break;
-        case EXPLICIT_STACK_POP:
-            BlarbVM_explicitPopOnStack(vm, line->val);
-            break;
-        case EXPLICIT_NAND:
-            BlarbVM_explicitNandOnStack(vm, line);
             break;
         }
         line++;
@@ -278,11 +310,11 @@ void BlarbVM_pushStackArg(BlarbVM *vm, const char *s) {
 }
 
 void BlarbVM_step(BlarbVM *vm) {
-	BlarbVM_WORD *lineToExecute = &(vm->registers[0]); // line pointer
-	if (*lineToExecute < vm->lineCount) {
-		BlarbVM_executeLine(vm, vm->lines[*lineToExecute]);
-		(*lineToExecute)++;
-	} else {
+    BlarbVM_WORD *lineToExecute = &(vm->registers[0]); // line pointer
+    if (*lineToExecute < vm->lineCount) {
+        BlarbVM_executeLine(vm, vm->lines[*lineToExecute]);
+        (*lineToExecute)++;
+    } else {
         vm->running = 0;
     }
 }
@@ -301,7 +333,15 @@ void BlarbVM_dumpDebug(BlarbVM *vm) {
 	fprintf(stderr, "\nRegisters:\n");
 	for (i = 0; i < sizeof(vm->registers) / sizeof(BlarbVM_WORD); i++) {
 		BlarbVM_WORD value = vm->registers[i];
-		fprintf(stderr, "%lu: %lx \n", i, value);
+
+        if (i == 0) {
+            // Register 0 is the line pointer, so let's output some useful info
+            LineDebugInfo *info = &vm->linesDebug[vm->registers[0]];
+            fprintf(stderr, "%lu: %lx (%s:%lu)\n",
+                    i, value, info->fileName, info->line);
+        } else {
+            fprintf(stderr, "%lu: %lx \n", i, value);
+        }
 	}
 	fprintf(stderr, "\nStack:\n");
 

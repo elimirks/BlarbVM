@@ -80,22 +80,35 @@ token * BlarbVM_optimizeLine(token *line, BlarbVM_WORD *tokenCount) {
     token *newLine = malloc(sizeof(token) * *tokenCount);
     BlarbVM_WORD newLineTokenCount = 0;
 
+    // These optimizations combine integer-push operations with other primitives
+
     for (BlarbVM_WORD i = 0; i < *tokenCount; i++) {
         token *optToken = &newLine[newLineTokenCount++];
 
-        #if 1
-        if (*tokenCount >= i + 1) {
-            if (line[i].type == INTEGER && line[i + 1].type == STACK_POP) {
+        if (*tokenCount >= i + 1 && line[i].type == INTEGER) {
+            if (line[i + 1].type == STACK_POP) {
                 optToken->type = EXPLICIT_STACK_POP;
                 optToken->val  = line[i].val;
-                // Skip the stack pop entirely
+                i++;
+                continue;
+            } else if (line[i + 1].type == REG_GET) {
+                optToken->type = EXPLICIT_REG_GET;
+                optToken->val  = line[i].val;
+                i++;
+                continue;
+            } else if (line[i + 1].type == CONDITION) {
+                optToken->type = EXPLICIT_CONDITION;
+                optToken->val  = line[i].val;
                 i++;
                 continue;
             }
         }
 
-        if (*tokenCount >= i + 2) {
-            if (line[i].type == INTEGER && line[i + 1].type == INTEGER && line[i + 2].type == NAND) {
+        if (*tokenCount >= i + 2 &&
+            line[i].type == INTEGER &&
+            line[i + 1].type == INTEGER) {
+
+            if (line[i + 2].type == NAND) {
                 optToken->type    = EXPLICIT_NAND;
                 optToken->vals[0] = line[i].val;
                 optToken->vals[1] = line[i + 1].val;
@@ -103,7 +116,6 @@ token * BlarbVM_optimizeLine(token *line, BlarbVM_WORD *tokenCount) {
                 continue;
             }
         }
-        #endif
 
         *optToken = line[i];
     }

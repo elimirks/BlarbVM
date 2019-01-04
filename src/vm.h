@@ -33,6 +33,8 @@ typedef enum {
     // Optimized operations
     EXPLICIT_STACK_POP,
     EXPLICIT_NAND,
+    EXPLICIT_REG_GET,
+    EXPLICIT_CONDITION,
 } token_t;
 
 typedef struct token {
