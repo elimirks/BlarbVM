@@ -75,10 +75,48 @@ void addStringLiteralToToken(token *t, char *str) {
     t->str[i] = '\0';
 }
 
+token * BlarbVM_optimizeLine(token *line, BlarbVM_WORD *tokenCount) {
+    // The new line is _at most_ the same length as the old line
+    token *newLine = malloc(sizeof(token) * *tokenCount);
+    BlarbVM_WORD newLineTokenCount = 0;
+
+    for (BlarbVM_WORD i = 0; i < *tokenCount; i++) {
+        token *optToken = &newLine[newLineTokenCount++];
+
+        #if 1
+        if (*tokenCount >= i + 1) {
+            if (line[i].type == INTEGER && line[i + 1].type == STACK_POP) {
+                optToken->type = EXPLICIT_STACK_POP;
+                optToken->val  = line[i].val;
+                // Skip the stack pop entirely
+                i++;
+                continue;
+            }
+        }
+
+        if (*tokenCount >= i + 2) {
+            if (line[i].type == INTEGER && line[i + 1].type == INTEGER && line[i + 2].type == NAND) {
+                optToken->type    = EXPLICIT_NAND;
+                optToken->vals[0] = line[i].val;
+                optToken->vals[1] = line[i + 1].val;
+                i += 2;
+                continue;
+            }
+        }
+        #endif
+
+        *optToken = line[i];
+    }
+
+    free(line);
+    *tokenCount = newLineTokenCount;
+    return newLine;
+}
+
 // Scans a line of tokens using yylex
 token * BlarbVM_scanLine(BlarbVM *vm) {
-    int tokenCount = 0;
-    // 1024 tokens should be way more than enough.
+    BlarbVM_WORD tokenCount = 0;
+    // 1024 tokens *should* be way more than enough.
     token *line = malloc(sizeof(token) * 1024);
     token_t tokenType;
 
@@ -129,6 +167,8 @@ token * BlarbVM_scanLine(BlarbVM *vm) {
         token *t = &line[tokenCount++];
         t->type = NEWLINE;
     }
+
+    line = BlarbVM_optimizeLine(line, &tokenCount);
 
     // Resize the memory chunk so we don't waste memory on small lines
     return realloc(line, sizeof(token) * tokenCount);

@@ -30,6 +30,9 @@ typedef enum {
     NEWLINE,
     STR,
     CHR,
+    // Optimized operations
+    EXPLICIT_STACK_POP,
+    EXPLICIT_NAND,
 } token_t;
 
 typedef struct token {
@@ -37,6 +40,8 @@ typedef struct token {
     union {
         BlarbVM_WORD val;
         char *str;
+        // For optimizing parameters, we sometimes store multiple values
+        BlarbVM_WORD vals[6];
     };
 } token;
 

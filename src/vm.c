@@ -157,8 +157,24 @@ void BlarbVM_pushRegisterToStack(BlarbVM *vm) {
 	BlarbVM_pushToStack(vm, regValue);
 }
 
+void BlarbVM_explicitNandOnStack(BlarbVM *vm, token *t) {
+    vm->nandCount++;
+
+    // Simulate as if the args were on the stack
+    BlarbVM_WORD firstNandIndex  = t->vals[1] - 2;
+    BlarbVM_WORD secondNandIndex = t->vals[0] - 2;
+
+	BlarbVM_WORD firstNandValue = BlarbVM_peekOnStack(vm, firstNandIndex);
+	BlarbVM_WORD secondNandValue = BlarbVM_peekOnStack(vm, secondNandIndex);
+
+	BlarbVM_WORD result = ~(firstNandValue & secondNandValue);
+	BlarbVM_setOnStack(vm, secondNandIndex, result);
+}
+
 void BlarbVM_nandOnStack(BlarbVM *vm) {
-	BlarbVM_WORD firstNandIndex = BlarbVM_peekOnStack(vm, 0);
+    vm->nandCount++;
+
+    BlarbVM_WORD firstNandIndex = BlarbVM_peekOnStack(vm, 0);
 	BlarbVM_WORD secondNandIndex = BlarbVM_peekOnStack(vm, 1);
 
 	BlarbVM_WORD firstNandValue = BlarbVM_peekOnStack(vm, firstNandIndex);
@@ -180,9 +196,7 @@ int BlarbVM_conditionalFromStack(BlarbVM *vm) {
 	return conditionalValue != 0;
 }
 
-void BlarbVM_popOnStack(BlarbVM *vm) {
-	BlarbVM_WORD popAmount = BlarbVM_popFromStack(vm);
-
+void BlarbVM_explicitPopOnStack(BlarbVM *vm, BlarbVM_WORD popAmount) {
 	while (popAmount >= 1) {
 		if (vm->stack_top == 0) {
 			fprintf(stderr, "Tried popping more stack elements than avalaible\n");
@@ -191,6 +205,11 @@ void BlarbVM_popOnStack(BlarbVM *vm) {
 		BlarbVM_popFromStack(vm);
 		popAmount--;
 	}
+}
+
+void BlarbVM_popOnStack(BlarbVM *vm) {
+	BlarbVM_WORD popAmount = BlarbVM_popFromStack(vm);
+    BlarbVM_explicitPopOnStack(vm, popAmount);
 }
 
 void BlarbVM_executeLine(BlarbVM *vm, token *line) {
@@ -219,7 +238,6 @@ void BlarbVM_executeLine(BlarbVM *vm, token *line) {
             BlarbVM_popOnStack(vm);
             break;
         case NAND:
-            vm->nandCount++;
             BlarbVM_nandOnStack(vm);
             break;
         case CONDITION:
@@ -241,6 +259,12 @@ void BlarbVM_executeLine(BlarbVM *vm, token *line) {
         case CHR:
         case NEWLINE:
           break;
+        case EXPLICIT_STACK_POP:
+            BlarbVM_explicitPopOnStack(vm, line->val);
+            break;
+        case EXPLICIT_NAND:
+            BlarbVM_explicitNandOnStack(vm, line);
+            break;
         }
         line++;
     }
