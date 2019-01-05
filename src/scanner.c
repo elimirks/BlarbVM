@@ -225,7 +225,7 @@ void BlarbVM_addFileNameToLoadedFiles(BlarbVM *vm, char *fileName) {
 char * BlarbVM_resolveAndAllocFilePath(char *fileName) {
     char resolvedPath[PATH_MAX];
 
-    if (realpath(fileName, resolvedPath)) {
+    if (realpath(fileName, resolvedPath) == NULL) {
         perror("realpath");
     }
 

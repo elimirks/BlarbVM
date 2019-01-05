@@ -86,6 +86,23 @@ void BlarbVM_setRegisterFromStack(BlarbVM *vm) {
 	BlarbVM_popFromStack(vm);
 }
 
+void BlarbVM_runImportsInRegion(BlarbVM *vm,
+                                BlarbVM_WORD start,
+                                BlarbVM_WORD end) {
+    for (BlarbVM_WORD i = start; i < end; i++) {
+        for (token *t = vm->lines[i]; ; t++) {
+            if (t->type == INCLUDE) {
+                BlarbVM_executeLine(vm, vm->lines[i]);
+                break;
+            } else if (t->type == NEWLINE) {
+                // Stop executing once there is a line that doesn't include
+                // E.g., includes must be at the top, otherwise they're dynamic
+                return;
+            }
+        }
+    }
+}
+
 void BlarbVM_includeFileOnStack(BlarbVM *vm) {
 	char fileName[512];
 	size_t size = 0;
@@ -103,7 +120,10 @@ void BlarbVM_includeFileOnStack(BlarbVM *vm) {
 	}
 	fileName[size] = '\0';
 
+    BlarbVM_WORD includeOffset = vm->lineCount;
     BlarbVM_loadFile(vm, fileName);
+
+    BlarbVM_runImportsInRegion(vm, includeOffset, vm->lineCount);
 }
 
 size_t BlarbVM_brk(BlarbVM *vm, size_t newEnd) {

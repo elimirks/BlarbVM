@@ -1,3 +1,4 @@
+"logic.blarb" @
 ;7 3 0$nandi    ; Should be -4
 ;4 12 0$andi    ; Should be 4
 ;0 0$noti       ; Should be -1 (all ones)
@@ -34,57 +35,6 @@
 ;40 2 0$isgei
 
 0 0$exit
-
-
-
-; ANDs the two immediate values
-; Circuit: (A NAND B) NAND (A NAND B)
-#andi
-    4 3 ! ; A NAND B
-    4 4 !
-
-    2 0 ~ 2^ ; Pop the stack frame
-
-
-
-; NANDs the two immediate values
-#nandi
-    4 3 !       ; Nand it up
-    2 1 ~ 2^ 1$ ; Get rid of extra argument
-    2 0 ~ 1^    ; return
-
-
-
-; NOTs the immediate value
-; Circuit: A NAND A
-#noti
-    3 3 ! ; NAND the arg with itself
-    2 0 ~ 1^
-
-
-
-; ORs the two immediate values
-; Circuit: (A NAND A) NAND (B NAND B)
-#ori
-    4 4 !
-    3 3 !
-    4 3 !
-    2 0 ~ 2^
-
-
-
-; XORs the two immediate values
-; Circuit: (A NAND B) AND (A OR B)
-#xori
-    4 1 ~ 1$ ; Copy A
-    2 4 !    ; A NAND B
-
-    1$ 5 2 ~ 2$          ; Copy A and B
-    3 3 ! 2 2 ! 3 2 ! 1^ ; A OR B
-
-    3 2 ! 3 3 ! 1^ ; AND the two values on the stack
-
-    2 1 ~ 3 0 ~ 4^ 1$ ; Return the stored result
 
 
 
