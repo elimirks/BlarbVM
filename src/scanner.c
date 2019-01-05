@@ -1,4 +1,7 @@
 #include <stdint.h>
+#include <stdlib.h>
+// FIXME: This breaks MacOS support (which wasn't that great anyways)
+#include <linux/limits.h>
 
 #include "main.h"
 #include "vm.h"
@@ -213,38 +216,46 @@ int BlarbVM_shouldLoadFileName(BlarbVM *vm, char *fileName) {
     return 1;
 }
 
-char * BlarbVM_addFileNameToLoadedFiles(BlarbVM *vm, char *fileName) {
-    size_t fileNameLen = strlen(fileName);
-
+void BlarbVM_addFileNameToLoadedFiles(BlarbVM *vm, char *fileName) {
     vm->loadedFileNameCount++;
     vm->loadedFileNames = realloc(vm->loadedFileNames, vm->loadedFileNameCount);
+    vm->loadedFileNames[vm->loadedFileNameCount - 1] = fileName;
+}
 
-    char **new  = &vm->loadedFileNames[vm->loadedFileNameCount - 1];
-    *new = malloc(fileNameLen);
-    strncpy(*new, fileName, fileNameLen + 1);
+char * BlarbVM_resolveAndAllocFilePath(char *fileName) {
+    char resolvedPath[PATH_MAX];
 
-    char *savedFileName = *new;
-    savedFileName[fileNameLen] = '\0';
+    if (realpath(fileName, resolvedPath)) {
+        perror("realpath");
+    }
 
-    return savedFileName;
+    size_t pathLength = strlen(resolvedPath);
+    char *newFilePath = malloc(pathLength + 1);
+    strcpy(newFilePath, resolvedPath);
+    newFilePath[pathLength] = '\0';
+
+    return newFilePath;
 }
 
 void BlarbVM_loadFile(BlarbVM *vm, char *fileName) {
-    if ( ! BlarbVM_shouldLoadFileName(vm, fileName)) {
+    char *filePath = BlarbVM_resolveAndAllocFilePath(fileName);
+
+    if ( ! BlarbVM_shouldLoadFileName(vm, filePath)) {
+        free(filePath);
         return;
     }
 
-    // Stash away the file name safely in memory
-    fileName = BlarbVM_addFileNameToLoadedFiles(vm, fileName);
+    // For debugging, and avoiding including the same file twice
+    BlarbVM_addFileNameToLoadedFiles(vm, filePath);
 
-	FILE *fp = fopen(fileName, "r");
+	FILE *fp = fopen(filePath, "r");
 	if ( ! fp) {
-		fprintf(stderr, "Failed to open '%s'\n", fileName);
+		fprintf(stderr, "Failed to open '%s'\n", filePath);
 		perror("fopen");
 		terminateVM();
 	}
     yyin = fp;
-    yyfilename = fileName;
+    yyfilename = filePath;
 
 	token *line;
     while ((line = BlarbVM_scanLine(vm))) {
@@ -254,7 +265,7 @@ void BlarbVM_loadFile(BlarbVM *vm, char *fileName) {
         }
 
         BlarbVM_addLine(vm, line);
-        BlarbVM_addLineDebugInfo(vm, fileName);
+        BlarbVM_addLineDebugInfo(vm, filePath);
     }
 
     yyin = stdin;
