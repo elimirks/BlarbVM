@@ -17,7 +17,7 @@ void BlarbVM_addLabelPointer(BlarbVM *vm, char *name, int line) {
     }
 
     LabelPointer *newLabel = malloc(sizeof(LabelPointer));
-    strncpy(newLabel->name, name, sizeof(newLabel->name));
+    strcpy(newLabel->name, name);
     newLabel->line = line;
 
     HASH_ADD_STR(vm->labelPointers, name, newLabel);
@@ -174,7 +174,7 @@ token * BlarbVM_scanLine(BlarbVM *vm) {
     // If this is the EOF (no more tokens)
     if (tokenCount == 0) {
         free(line);
-        return 0;
+        return NULL;
     }
 
     // In case we hit an EOF on a valid line (we use newlines for terminators)
@@ -218,12 +218,13 @@ int BlarbVM_shouldLoadFileName(BlarbVM *vm, char *fileName) {
 
 void BlarbVM_addFileNameToLoadedFiles(BlarbVM *vm, char *fileName) {
     vm->loadedFileNameCount++;
-    vm->loadedFileNames = realloc(vm->loadedFileNames, vm->loadedFileNameCount);
+    vm->loadedFileNames = realloc(vm->loadedFileNames,
+                                  sizeof(char*) * vm->loadedFileNameCount);
     vm->loadedFileNames[vm->loadedFileNameCount - 1] = fileName;
 }
 
 char * BlarbVM_resolveAndAllocFilePath(char *fileName) {
-    char resolvedPath[PATH_MAX];
+    char resolvedPath[PATH_MAX + 1];
 
     if (realpath(fileName, resolvedPath) == NULL) {
         perror("realpath");
@@ -269,14 +270,16 @@ void BlarbVM_loadFile(BlarbVM *vm, char *fileName) {
     }
 
     yyin = stdin;
-	fclose(fp);
+    yyfilename = NULL;
+
+    fclose(fp);
 }
 
 void BlarbVM_addLine(BlarbVM *vm, token *line) {
 	if (ISPOWEROF2(vm->lineCount) || vm->lineCount == 0) {
 		// Double the size when space runs out - amortized time is O(1)
 		vm->lines = vm->lineCount == 0
-			? malloc(sizeof(token_t *) * 1)
+			? malloc(sizeof(token_t *))
 			: realloc(vm->lines, sizeof(token_t *) * vm->lineCount * 2);
 	}
 	vm->lines[vm->lineCount++] = line;

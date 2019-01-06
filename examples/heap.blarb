@@ -1,6 +1,6 @@
 ; Fooling around with memory allocation - I'll document this eventually
 
-"lib.blarb" @
+"@sys/library" @
 
 42 0$pushbytetoheapi
 12 0$pushbytetoheapi

@@ -1,4 +1,4 @@
-"lib.blarb" @
+"@sys/lib" @
 
 ; Run this program from the root Blarb directory
 ; This program demonstrates basic file I/O

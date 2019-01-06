@@ -10,6 +10,9 @@ OBJ_DIR = 'obj'
 
 SRCS = src/debugger.c src/main.c src/scanner.c src/vm.c
 
+BLARB_LIBRARY_PATH = $(shell pwd)/library
+OPTS += -DBLARB_LIBRARY_PATH="\"$(BLARB_LIBRARY_PATH)\""
+
 OS = $(shell uname -s)
 ifeq ($(OS),Darwin)
   SRCS += src/syscall_macos.c

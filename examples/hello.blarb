@@ -1,5 +1,5 @@
 ; Includes the standard library - you would be mad to not include this!
-"lib.blarb" @
+"@sys/library" @
 
 "Hello, Blarb!" 0$printline
 0 0$exit

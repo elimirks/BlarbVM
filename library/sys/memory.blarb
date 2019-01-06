@@ -1,0 +1,130 @@
+; Some examples:
+;42 0$pushbytetoheapi ; The value "42" should be on the heap
+;"hello" 1 0$stackstrlen ; Should return 5
+;5 0$brki
+
+"@sys/logic" @
+
+; B brki; new brk endpoint B (or 0)
+#brki
+    3 1 ~
+    0 0 0 0 0 1$ 12 % ; brk it up
+    3 0 ~ 2 1 ~ 3^ 1$
+
+
+
+; Usage: B pushbytetoheapi
+; Pushes byte B to the heap
+#pushbytetoheapi
+    ; Extend the breakpoint
+    0 0$brki
+    1 0$addi
+    0$brki
+    1 0$subi
+
+    4 2 = ; Set the heap value to the byte parameter
+
+    3 0 ~ 3^
+
+
+
+; B stackstrlen Push the length of the string at stack index B
+#stackstrlen
+    2 0$copy ; Starting stack index
+    3 0$addi ; Offset from the return address
+
+    #stackstrlenloop
+
+    ; If the value at the pointer is null, return!
+    1 0$copy
+    0$copy
+    1? 1^ stackstrlenrun
+    1^
+
+    ; Difference between initial string pointer and the end
+    3 0$copy
+    3 0$addi
+    0$subi
+
+    2 1 ~
+    3 0 ~ 3^ 1$
+
+    #stackstrlenrun
+    ; Increment the string pointer
+    1 0$addi
+    stackstrlenloop
+
+
+
+; I L pushbytearraytoheap
+; Copy array of length L at index I to the heap
+; Returns the initial array index breakpoint
+#pushbytearraytoheap
+    0 0$brki
+    3 0$copy ; The length of the array (L)
+    0$addi
+
+    0$brki ; Allocate memory for the byte array
+    1^
+
+    ; New initial breakpoint (it may have changed address)
+    0 0$brki
+    3 0$copy
+    0$subi
+
+    1 0$copy ; A following pointer (for byte copying)
+
+    #pushbytearraytoheaploop
+
+    ; On the stack at this point, just the initial breakpoint.
+    ; If L is non-zero, copy the next pointer byte and loop again
+    4? pushbytearraytoheaprun
+    
+    ; If L is 0, terminate and return the initial breakpoint.
+    3 1 ~
+    4 0 ~ 5^ 1$
+
+    #pushbytearraytoheaprun
+
+    5 0$copy ; I
+    4 0$addi ; Stack offset from this function
+    0$copy ; Copy so we don't destroy stack content
+    2 3 = ; Swap the byte to the heap
+    1^
+
+    1 0$addi ; Increment the pointer
+
+    ; Increment I
+    5 0$copy
+    1 0$addi 
+    6 0$seti
+
+    ; Decrement L
+    4 0$copy
+    1 0$subi
+    5 0$seti
+
+    pushbytearraytoheaploop
+
+
+
+; Pushes the string at the given stack index to the heap (no null byte)
+; Returns the heap memory address
+#pushstringtoheap
+    2 0$copy
+    2 0$addi ; Offset the index because of the local vars
+    0$stackstrlen
+    ; The index, again
+    3 0$copy
+    3 0$addi
+
+    ; Swap the stack vars, since the stack index is on the top now
+    2 1 ~ 3 2 ~ 2^ 1$ 2$
+
+    ; At this point, INDEX and SIZE should be on the stack
+
+    0$pushbytearraytoheap
+
+    ; Now it's just the heap address - so we return that
+    1 2 ~
+    3 0 ~ 3^ 1$

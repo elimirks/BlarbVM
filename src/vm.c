@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <linux/limits.h>
 
 #include "vm.h"
 #include "main.h"
@@ -103,8 +104,22 @@ void BlarbVM_runImportsInRegion(BlarbVM *vm,
     }
 }
 
+void BlarbVM_expandSystemIncludePath(char *fileName) {
+    char expandedFileName[PATH_MAX + 1];
+
+    if (fileName[0] == '@') {
+        snprintf(expandedFileName, sizeof(expandedFileName), "%s/%s.blarb",
+                BLARB_LIBRARY_PATH, &fileName[1]);
+    } else {
+        snprintf(expandedFileName, sizeof(expandedFileName), "%s.blarb",
+                fileName);
+    }
+
+    strcpy(fileName, expandedFileName);
+}
+
 void BlarbVM_includeFileOnStack(BlarbVM *vm) {
-	char fileName[512];
+	char fileName[PATH_MAX + 1];
 	size_t size = 0;
 
 	char c;
@@ -112,7 +127,7 @@ void BlarbVM_includeFileOnStack(BlarbVM *vm) {
 		fileName[size++] = c;
 
         if (size > sizeof(fileName) - 2) {
-            fprintf(stderr, "Make include file name length is %lu.",
+            fprintf(stderr, "Max include file name length is %lu.",
                     sizeof(fileName));
             BlarbVM_exit(vm, 1);
             return;
@@ -120,9 +135,10 @@ void BlarbVM_includeFileOnStack(BlarbVM *vm) {
 	}
 	fileName[size] = '\0';
 
+    BlarbVM_expandSystemIncludePath(fileName);
+
     BlarbVM_WORD includeOffset = vm->lineCount;
     BlarbVM_loadFile(vm, fileName);
-
     BlarbVM_runImportsInRegion(vm, includeOffset, vm->lineCount);
 }
 

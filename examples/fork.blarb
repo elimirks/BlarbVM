@@ -1,4 +1,4 @@
-"lib.blarb" @
+"@sys/lib" @
 
 ; This program demonstrates forking a process
 

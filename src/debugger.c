@@ -18,7 +18,7 @@ void pushpop_breakpoint(int *bpc, BlarbVM_WORD bp);
 /**
  * Executes the given command, interactively.
  */
-void exec_command(BlarbVM *vm, char *command, size_t len);
+void exec_command(BlarbVM *vm, char *command);
 
 #define MAX_BREAKPOINTS (256)
 static BlarbVM_WORD breakpoints[MAX_BREAKPOINTS];
@@ -90,7 +90,7 @@ void BlarbVM_debugger(BlarbVM *vm) {
         } else if (strncmp(input_buffer, "exec ", 5) == 0) {
             char *command = &input_buffer[5];
             printf("Executing `%s`...\n", command);
-            exec_command(vm, command, INPUT_BUFFER_LEN);
+            exec_command(vm, command);
         } else if (strlen(input_buffer) > 0) {
             printf("Invalid command: %s\n", input_buffer);
         }
@@ -149,13 +149,13 @@ int hit_breakpoint(BlarbVM *vm, int bpc) {
     return 0;
 }
 
-void exec_command(BlarbVM *vm, char *command, size_t len) {
+void exec_command(BlarbVM *vm, char *command) {
     extern FILE *yyin;
     extern char *yyfilename;
 
-    // Create a temporary in-memory file descriptor, for yylex
-    char *fileContent = malloc(sizeof(char) * len);
-    FILE *fp = fmemopen(fileContent, len + 1, "w+");
+    // In-memory file descriptor, for yylex
+    char fileContent[INPUT_BUFFER_LEN];
+    FILE *fp = fmemopen(fileContent, INPUT_BUFFER_LEN, "w+");
     fprintf(fp, "%s", command);
     rewind(fp);
 
@@ -173,7 +173,6 @@ void exec_command(BlarbVM *vm, char *command, size_t len) {
 
     yyin = stdin;
     fclose(fp);
-    free(fileContent);
 }
 
 void print_loaded_files(BlarbVM *vm) {

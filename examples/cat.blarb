@@ -1,4 +1,4 @@
-"lib.blarb" @
+"@sys/lib" @
 
 ; This program is a simple implemantion of the cat program
 ; This implementation does not support the "-" arg.. yet!

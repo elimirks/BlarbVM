@@ -1,0 +1,9 @@
+"@sys/logic" @
+"@sys/memory" @
+"@sys/io" @
+
+0 0$exit
+
+#exit
+    3 1~
+    0 0 0 0 0 1$ 60 % 3^

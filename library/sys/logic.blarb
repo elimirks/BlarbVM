@@ -1,42 +1,51 @@
-"logic.blarb" @
-;7 3 0$nandi    ; Should be -4
-;4 12 0$andi    ; Should be 4
-;0 0$noti       ; Should be -1 (all ones)
-;8 4 0$ori      ; Should be 12
-;8 12 0$xori    ; Should be 4
-;255 0$lshiftilone ; Should be 510
-;9 128 0$addi   ; Should be 137
-;37 12 0$subi   ; Should be 25
-;2 2 2 42 3 0$seti
-;1 2 0$lshiftil ; Should be 4
-;6 0$rshiftilone
-;12 1 0$rshiftil
-;3 4 0$iseqi ; Should be 0
-;42 0$pushbytetoheapi ; The value "42" should be on the heap
-;"hello" 1 0$stackstrlen ; Should return 5
+; ANDs the two immediate values
+; Circuit: (A NAND B) NAND (A NAND B)
+#andi
+    4 3 ! ; A NAND B
+    4 4 !
 
-;10 "Hello, world!" 2 15 0$print
-;10 2 1 0$print
-;10 "Blarb." 2 8 0$print
-;10 'a' 2 2 0$print ; Should print "a\n"
-
-;"Hello, Blarb!" 0$printline
-;"hello" 1 0$pushstringtoheap
-
-;"test.txt" 0 0 0$openwithname
-;0$closedescriptor
-
-;0 0$readchar ; Reads a single character from stdin
-
-;5 0$brki
-
-;24234 324 0$dividei
-;1284 3487 0$multiplyi
-;40 2 0$isgei
-
-0 0$exit
+    2 0 ~ 2^ ; Pop the stack frame
 
 
+
+; NANDs the two immediate values
+#nandi
+    4 3 !       ; Nand it up
+    2 1 ~ 2^ 1$ ; Get rid of extra argument
+    2 0 ~ 1^    ; return
+
+
+
+; NOTs the immediate value
+; Circuit: A NAND A
+#noti
+    3 3 ! ; NAND the arg with itself
+    2 0 ~ 1^
+
+
+
+; ORs the two immediate values
+; Circuit: (A NAND A) NAND (B NAND B)
+#ori
+    4 4 !
+    3 3 !
+    4 3 !
+    2 0 ~ 2^
+
+
+
+; XORs the two immediate values
+; Circuit: (A NAND B) AND (A OR B)
+#xori
+    4 1 ~ 1$ ; Copy A
+    2 4 !    ; A NAND B
+
+    1$ 5 2 ~ 2$          ; Copy A and B
+    3 3 ! 2 2 ! 3 2 ! 1^ ; A OR B
+
+    3 2 ! 3 3 ! 1^ ; AND the two values on the stack
+
+    2 1 ~ 3 0 ~ 4^ 1$ ; Return the stored result
 
 ; Pushes a null-terminated bitmask list to the stack
 #pushincreasingbitmasklist
@@ -332,237 +341,3 @@
 #tobooli
     2? 2 0 ~ 2^ 1
     2 0 ~ 2^ 0
-
-
-
-; B brki; new brk endpoint B (or 0)
-#brki
-    3 1 ~
-    0 0 0 0 0 1$ 12 % ; brk it up
-    3 0 ~ 2 1 ~ 3^ 1$
-
-
-
-; Usage: B pushbytetoheapi
-; Pushes byte B to the heap
-#pushbytetoheapi
-    ; Extend the breakpoint
-    0 0$brki
-    1 0$addi
-    0$brki
-    1 0$subi
-
-    4 2 = ; Set the heap value to the byte parameter
-
-    3 0 ~ 3^
-
-
-
-; B stackstrlen Push the length of the string at stack index B
-#stackstrlen
-    2 0$copy ; Starting stack index
-    3 0$addi ; Offset from the return address
-
-    #stackstrlenloop
-
-    ; If the value at the pointer is null, return!
-    1 0$copy
-    0$copy
-    1? 1^ stackstrlenrun
-    1^
-
-    ; Difference between initial string pointer and the end
-    3 0$copy
-    3 0$addi
-    0$subi
-
-    2 1 ~
-    3 0 ~ 3^ 1$
-
-    #stackstrlenrun
-    ; Increment the string pointer
-    1 0$addi
-    stackstrlenloop
-
-
-
-; I L pushbytearraytoheap
-; Copy array of length L at index I to the heap
-; Returns the initial array index breakpoint
-#pushbytearraytoheap
-    0 0$brki
-    3 0$copy ; The length of the array (L)
-    0$addi
-
-    0$brki ; Allocate memory for the byte array
-    1^
-
-    ; New initial breakpoint (it may have changed address)
-    0 0$brki
-    3 0$copy
-    0$subi
-
-    1 0$copy ; A following pointer (for byte copying)
-
-    #pushbytearraytoheaploop
-
-    ; On the stack at this point, just the initial breakpoint.
-    ; If L is non-zero, copy the next pointer byte and loop again
-    4? pushbytearraytoheaprun
-    
-    ; If L is 0, terminate and return the initial breakpoint.
-    3 1 ~
-    4 0 ~ 5^ 1$
-
-    #pushbytearraytoheaprun
-
-    5 0$copy ; I
-    4 0$addi ; Stack offset from this function
-    0$copy ; Copy so we don't destroy stack content
-    2 3 = ; Swap the byte to the heap
-    1^
-
-    1 0$addi ; Increment the pointer
-
-    ; Increment I
-    5 0$copy
-    1 0$addi 
-    6 0$seti
-
-    ; Decrement L
-    4 0$copy
-    1 0$subi
-    5 0$seti
-
-    pushbytearraytoheaploop
-
-
-
-; Pushes the string at the given stack index to the heap (no null byte)
-; Returns the heap memory address
-#pushstringtoheap
-    2 0$copy
-    2 0$addi ; Offset the index because of the local vars
-    0$stackstrlen
-    ; The index, again
-    3 0$copy
-    3 0$addi
-
-    ; Swap the stack vars, since the stack index is on the top now
-    2 1 ~ 3 2 ~ 2^ 1$ 2$
-
-    ; At this point, INDEX and SIZE should be on the stack
-
-    0$pushbytearraytoheap
-
-    ; Now it's just the heap address - so we return that
-    1 2 ~
-    3 0 ~ 3^ 1$
-
-
-
-; FIXME this is broken
-; Takes a single argument: The file descriptor to read from.
-#readchar
-    0 0$brki ; Get the current heap address
-    1 0$addi
-    0$brki ; Extend it by one byte
-    1 0$subi
-    2 1 ~
-
-    4 2 ~; File descriptor argument
-
-    ; Read syscall is 0
-    0 0 0 1 1$ 2$ 0 %
-    1^ ; Pop the return status (ignore it for now)
-
-    0 2 3 =; Swap the heap byte out with a 0, so it's on the stack now
-
-    2 0$copy
-    0$brki ; Deallocate the buffer
-    
-    3 1 ~
-    5 0 ~ 5^ 1$
-
-
-
-; Prints the array at the given index
-; A B print - Prints the array at index A of length B
-#print
-    3 0$copy ; Index
-    3 0$addi
-    3 0$copy ; Length
-    0$pushbytearraytoheap ; Replaces index and length with a heap pointer
-
-    3 0$copy
-
-    ; Length in reg 1 and pointer in reg 2
-    2 1 ~ 3 2 ~
-
-    ; Print from the heap
-    0 0 0 1$ 2$ 1 1 %
-
-    3 0$copy ; Pointer to the beginning of the string (on the heap)
-    0$brki ; Deallocate the string, now that we are done printing.
-
-    6 0 ~ 7^
-
-
-
-; Shortcut to print a line (with a newline) and pop the string
-; "str" printline - Prints the null terminated <str>
-#printline
-    2 0$stackstrlen
-    4
-    2 0$copy
-    0$print
-
-    ; Print a newline
-    10 2 1 0$print
-    1^
-
-    ; Pop the length of the string, plus stack vars, plus null byte
-    3 0$addi
-    2 1 ~
-    3 0 ~ 1$ ^
-
-
-
-; Open a file and return a descriptor number
-; e.g. "test.txt" FLAGS MODE openwithname
-; mode 0 is read only (see Linux "open" syscall docs)
-#openwithname
-    4 0$pushstringtoheap
-    0 0$pushbytetoheapi ; the open syscall needs a null termination
-
-    2 1 ~ ; name
-    5 2 ~ ; flags
-    4 3 ~ ; mode
-    ; Now we have a pointer to that string on the stack
-    0 0 0 3$ 2$ 1$ 2 %
-
-    2 0$copy ; Pointer to the beginning of the string (on the heap)
-    0$brki   ; Deallocate the string, now that we are done printing.
-
-    ; Figure out the string length and pop em' all!
-    7 0$stackstrlen
-    7 0$addi
-
-    4 2 ~ ; Store the file descriptor value, so we can return it
-    6 0 ~ ^ 2$
-
-
-
-; Close the give descriptor
-; Returns nothing (but really... we should return a status)
-#closedescriptor
-    3 1 ~ ; Store the descriptor number for sanity
-    0 0 0 0 0 1$ 3 %
-    ; Note: The syscall operater returns a status - we assume it works :)
-    3 0 ~ 3^
-
-
-
-#exit
-    3 1~
-    0 0 0 0 0 1$ 60 % 3^
