@@ -10,7 +10,10 @@ OBJ_DIR = 'obj'
 
 SRCS = src/debugger.c src/main.c src/scanner.c src/vm.c
 
+ifeq ($(BLARB_LIBRARY_PATH),)
 BLARB_LIBRARY_PATH = $(shell pwd)/library
+endif
+
 OPTS += -DBLARB_LIBRARY_PATH="\"$(BLARB_LIBRARY_PATH)\""
 
 OS = $(shell uname -s)
