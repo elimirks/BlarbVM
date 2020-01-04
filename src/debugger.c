@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <math.h>
 #include "main.h"
 #include "debugger.h"
 
@@ -7,6 +8,9 @@ void print_current_vm_line(BlarbVM *vm);
 void print_loaded_files(BlarbVM *vm);
 int hit_breakpoint(BlarbVM *vm, int bpc);
 void print_breakpoints(int bpc);
+
+void list_current_context(BlarbVM *vm);
+
 /**
  * Pushes a breakpoint if it exists. Pops otherwise.
  *
@@ -91,6 +95,8 @@ void BlarbVM_debugger(BlarbVM *vm) {
             char *command = &input_buffer[5];
             printf("Executing `%s`...\n", command);
             exec_command(vm, command);
+        } else if (strncmp(input_buffer, "list", 4) == 0) {
+            list_current_context(vm);
         } else if (strlen(input_buffer) > 0) {
             printf("Invalid command: %s\n", input_buffer);
         }
@@ -185,4 +191,84 @@ void print_current_vm_line(BlarbVM *vm) {
     BlarbVM_WORD lp = vm->registers[0]; // line pointer
     LineDebugInfo *info = &vm->linesDebug[lp];
     printf("Executed %s:%ld\n", info->fileName, info->line);
+}
+
+void print_token_line(token *line) {
+    for (token *t = line; t->type != NEWLINE; t++) {
+        switch (t->type) {
+        case INTEGER:
+            printf("%lu ", t->val);
+            break;
+        case LABEL_CALL:
+            printf("%s ", t->str);
+            break;
+        case INCLUDE:
+            printf("@ ");
+            break;
+        case REG_STORE:
+            printf("~ ");
+            break;
+        case REG_GET:
+            printf("$ ");
+            break;
+        case STACK_POP:
+            printf("^ ");
+            break;
+        case NAND:
+            printf("! ");
+            break;
+        case CONDITION:
+            printf("? ");
+            break;
+        case SYS_CALL:
+            printf("%% ");
+            break;
+        case HEAP_SWAP:
+            printf("= ");
+            break;
+        case STR:
+            printf("\"%s\" ", t->str);
+            break;
+        case CHR:
+            printf("\'%c\' ", (char)t->val);
+            break;
+        case EXPLICIT_STACK_POP:
+            printf("%lu ^ ", t->val);
+            break;
+        case EXPLICIT_NAND:
+            printf("%lu %lu ! ", t->vals[0], t->vals[1]);
+            break;
+        case EXPLICIT_REG_GET:
+            printf("%lu $ ", t->val);
+            break;
+        case EXPLICIT_CONDITION:
+            printf("%lu ? ", t->val);
+            break;
+        case LABEL:
+            printf("#%s ", t->str);
+            break;
+        default:
+            fprintf(stderr, "Unrecognized token type\n");
+            exit(1);
+        }
+    }
+}
+
+void list_current_context(BlarbVM *vm) {
+    BlarbVM_WORD lp = vm->registers[0];
+
+    BlarbVM_WORD start = lp < 10 ? 0 : lp - 10;
+    BlarbVM_WORD end   = lp + 10 > vm->lineCount ? vm->lineCount : lp + 10;
+
+    for (BlarbVM_WORD i = start; i < end; i++) {
+        LineDebugInfo *info = &vm->linesDebug[i];
+        printf("%s:%-4lu -> %-8lu", info->fileName, info->line, i);
+        if (i == lp) {
+            printf("* ");
+        } else {
+            printf("  ");
+        }
+        print_token_line(vm->lines[i]);
+        printf("\n");
+    }
 }

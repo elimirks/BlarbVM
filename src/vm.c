@@ -372,9 +372,17 @@ void BlarbVM_dumpDebug(BlarbVM *vm) {
 
         if (i == 0) {
             // Register 0 is the line pointer, so let's output some useful info
-            LineDebugInfo *info = &vm->linesDebug[vm->registers[0]];
-            fprintf(stderr, "%lu: %lx (%s:%lu)\n",
-                    i, value, info->fileName, info->line);
+
+            BlarbVM_WORD lp = vm->registers[0];
+
+            if (lp < vm->lineCount) {
+                LineDebugInfo *info = &vm->linesDebug[lp];
+                fprintf(stderr, "%lu: %lx (%s:%lu)\n",
+                        i, value, info->fileName, info->line);
+            } else {
+                fprintf(stderr, "%lu: %lx (invalid line pointer)\n",
+                        i, value);
+            }
         } else {
             fprintf(stderr, "%lu: %lx \n", i, value);
         }
