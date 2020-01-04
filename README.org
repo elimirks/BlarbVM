@@ -6,7 +6,7 @@
 ** Architecture
    In Blarb, there is a stack, heap, and [[Registers][registers]]. On the stack, every element is a 64-bit integer. To increase the heap size, you must use the [[System Calls][brk system call]].
    
-   When you include a file with the [[Include File][~@~ operator]], the tokens in that file will be appended to the parse tree - thus, you should _always_ exit the VM at the end of your programs by calling syscall ~60~ via ~0 0 0 0 0 0 60 %~, or call ~0 exit~ if you are using the [[Standard Library][standard library]]. The set of includes at the top of the file (until the first non-including line) will run at include-time. All other includes are dynamic.
+   When you include a file with the [[Include File][@ operator]], the tokens in that file will be appended to the parse tree - thus, you should _always_ exit the VM at the end of your programs by calling syscall ~60~ via ~0 0 0 0 0 0 60 %~, or call ~0 exit~ if you are using the [[Standard Library][standard library]]. The set of includes at the top of the file (until the first non-including line) will run at include-time. All other includes are dynamic.
 ** Registers
    There are 8 registers, numbered 0-7. The 0th register is the line pointer - that is, the line that is currently being evaluated. Registers 1-3 are short term registers, that may change when you call a function or jump to a label. Registers 4-7 are guaranteed to _never_ be used in the standard library (which I'll explain later), so you can use them for long term storage in your userspace programs.
    
@@ -25,7 +25,7 @@
 *** Integers
     64-bit singed integers - can be negative.
 *** Strings
-    In Blarb, a string is simply a null-terminated sequence of numbers on the stack. Typing a string literal in will translate into a null-terminated sequence, for sanity. To escape a quotation, use ~\"~. To escape backslashes, use ~\\~. Newlines and tabs are escaped with ~\n~ and ~\t~, as usual.
+    In Blarb, a string is simply a null-terminated sequence of numbers on the stack. Typing a string literal in will translate into a null-terminated sequence, for sanity. To escape a quotation, use \". To escape backslashes, use ~\\~. Newlines and tabs are escaped with ~\n~ and ~\t~, as usual.
 *** Characters
     Characters are parsed like strings, but get turned into integer types when parsed. Thus, like most other language, a character can only contain a single byte (the character escapes still work).
 ** Operations
@@ -34,7 +34,7 @@
 *** NAND
     ~b a !~ NANDS index a with index b and stores the result in index b
 *** Store Register
-    ~a b \~~ Store the value at index a in register b
+    =a b ~= Store the value at index a in register b
 *** Get Register
     ~a$~ Push register a onto the stack
 *** Pop from Stack
@@ -42,7 +42,7 @@
 *** Conditional
     ~a?~ if index a is true (non-zero), execute the rest of the line
 *** Include File
-    ~"filename"@~ Include the file "filename.blarb". Duplicates will be ignored. The "@" symbol within the included file name will be expanded into the system directory, for instance ~"@sys/memory"@~.
+    "filename"@ Include the file "filename.blarb". Duplicates will be ignored. The "@" symbol within the included file name will be expanded into the system directory, for instance "@sys/memory"@.
 *** System Calls
     ~f e d c b a syscallnum %~ Execute the system call with the given args
     
@@ -193,4 +193,4 @@
 * Syntax Highlighting
   See the [[https://github.com/elimirks/BlarbVM/tree/master/editors][editors]] directory for some syntax highlighting plugins. Currently there are only Vim and Emacs plugins.
 * Examples
-  See the [[https://github.com/elimirks/BlarbVM/tree/master/examples][examples]] directory for worked examples. If you freshly cloned this project, run ~./blarb --debug example/function.blarb~, for instance.
+  See the [[https://github.com/elimirks/BlarbVM/tree/master/examples][examples]] directory for worked examples. If you freshly cloned this project, run ~./blarb --debug example/function.blarb~, for instance. To see how the VM is running, use the ~--debugger~ flag.
