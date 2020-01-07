@@ -115,6 +115,7 @@ void help() {
            "nands:      Get the amount of NANDS performed\n"
            "files:      Prints which Blarb files have been loaded\n"
            "exec <cmd>: Executed the given Blarb command\n"
+           "list:       List the blarb code around the current line pointer\n"
            "\n");
 }
 
