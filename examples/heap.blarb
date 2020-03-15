@@ -1,6 +1,6 @@
 ; Fooling around with memory allocation - I'll document this eventually
 
-"@sys/library" @
+"@sys/lib" @
 
 42 0$pushbytetoheapi
 12 0$pushbytetoheapi
