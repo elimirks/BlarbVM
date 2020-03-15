@@ -100,12 +100,6 @@ void BlarbVM_execute(BlarbVM *vm);
 void BlarbVM_executeLine(BlarbVM *vm, token *line);
 
 /**
- * Dump a VM trace.
- * This will output registers and the stack in a human readable format.
- */
-void BlarbVM_dumpDebug(BlarbVM *vm);
-
-/**
  * Create a new VM.
  */
 void BlarbVM_init(BlarbVM *vm);

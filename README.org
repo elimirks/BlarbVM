@@ -4,7 +4,7 @@
   Blarb is designed to be the simplest possible (esoteric) systems programming language. Being as such, there is only one logical operator: NAND. It is an assembly-like, stack & register based language.
 
 ** Architecture
-   In Blarb, there is a stack, heap, and [[Registers][registers]]. On the stack, every element is a 64-bit integer. To increase the heap size, you must use the [[System Calls][brk system call]].
+   In Blarb, there is a stack, heap, and [[Registers][registers]]. On the stack, every element is a 64-bit word. To increase the heap size, you must use the [[System Calls][brk system call]].
    
    When you include a file with the [[Include File][@ operator]], the tokens in that file will be appended to the parse tree - thus, you should _always_ exit the VM at the end of your programs by calling syscall ~60~ via ~0 0 0 0 0 0 60 %~, or call ~0 exit~ if you are using the [[Standard Library][standard library]]. The set of includes at the top of the file (until the first non-including line) will run at include-time. All other includes are dynamic.
 ** Registers
@@ -22,12 +22,12 @@
 
 ** Literals
    There are only two types of type literals in blarb:
-*** Integers
-    64-bit singed integers - can be negative.
+*** Words
+    64-bit words. They are generally represented as 64-bit integers, but there technically isn't a concept of an integer in Blarb. Using the logic module of the standard library, one can perform integer operations on the words, however.
 *** Strings
-    In Blarb, a string is simply a null-terminated sequence of numbers on the stack. Typing a string literal in will translate into a null-terminated sequence, for sanity. To escape a quotation, use \". To escape backslashes, use ~\\~. Newlines and tabs are escaped with ~\n~ and ~\t~, as usual.
+    In Blarb, a string is simply a null-terminated sequence of words on the stack. Typing a string literal in will translate into a null-terminated sequence, for sanity. To escape a quotation, use \". To escape backslashes, use ~\\~. Newlines and tabs are escaped with ~\n~ and ~\t~, as usual.
 *** Characters
-    Characters are parsed like strings, but get turned into integer types when parsed. Thus, like most other language, a character can only contain a single byte (the character escapes still work).
+    Characters are parsed like strings, but get turned into word types when parsed. Thus, like most other languages, a character can only contain a single byte (the character escapes still work).
 ** Operations
    There are currently 8 single-letter operations. Additionally, you can type a single number to push that number onto the stack (64-bit signed integer). Space between operators and integers or function calls is optional.
 

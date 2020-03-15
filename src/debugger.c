@@ -30,6 +30,15 @@ static BlarbVM_WORD breakpoints[MAX_BREAKPOINTS];
 #define INPUT_BUFFER_LEN (1024)
 static char input_buffer[INPUT_BUFFER_LEN];
 
+enum {
+      DISPLAY_UNSIGNED_INTEGER = 0,
+      DISPLAY_SIGNED_INTEGER,
+      DISPLAY_HEX,
+      DISPLAY_BINARY,
+};
+
+static int dump_display_mode = DISPLAY_UNSIGNED_INTEGER;
+
 void BlarbVM_debugger(BlarbVM *vm) {
     char *c;
     strncpy(input_buffer, " ", 1);
@@ -97,6 +106,21 @@ void BlarbVM_debugger(BlarbVM *vm) {
             exec_command(vm, command);
         } else if (strncmp(input_buffer, "list", 4) == 0) {
             list_current_context(vm);
+        } else if (strncmp(input_buffer, "display ", 8) == 0) {
+            char *display_type = &input_buffer[8];
+
+            if (strncmp(display_type, "int", 3) == 0) {
+                dump_display_mode = DISPLAY_SIGNED_INTEGER;
+            } else if (strncmp(display_type, "uint", 4) == 0) {
+                dump_display_mode = DISPLAY_UNSIGNED_INTEGER;
+            } else if (strncmp(display_type, "hex", 3) == 0) {
+                dump_display_mode = DISPLAY_HEX;
+            } else if (strncmp(display_type, "binary", 6) == 0) {
+                dump_display_mode = DISPLAY_BINARY;
+            } else {
+                printf("Invalid display type.\n"
+                       "Please choose uint, int, hex, or binary\n");
+            }
         } else if (strlen(input_buffer) > 0) {
             printf("Invalid command: %s\n", input_buffer);
         }
@@ -106,16 +130,17 @@ void BlarbVM_debugger(BlarbVM *vm) {
 void help() {
     printf("Welcome to the Blarb debugger.\n"
            "Available commands:\n"
-           "help:       Show this dialog\n"
-           "run:        Run the program\n"
-           "dump:       Show a Blarb dump\n"
-           "step:       Run a step (a single line)\n"
-           "break n:    Set a breakpoint at line 'n'\n"
-           "status:     Get exit status\n"
-           "nands:      Get the amount of NANDS performed\n"
-           "files:      Prints which Blarb files have been loaded\n"
-           "exec <cmd>: Executed the given Blarb command\n"
-           "list:       List the blarb code around the current line pointer\n"
+           "help:             Show this dialog\n"
+           "run:              Run the program\n"
+           "dump:             Show a Blarb dump\n"
+           "step:             Run a step (a single line)\n"
+           "break n:          Set a breakpoint at line 'n'\n"
+           "status:           Get exit status\n"
+           "nands:            Get the amount of NANDS performed\n"
+           "files:            Prints which Blarb files have been loaded\n"
+           "exec <cmd>:       Executed the given Blarb command\n"
+           "list:             List the blarb code around the current line pointer\n"
+           "display <mode>:   Change the dump display mode (uint, int, hex, or binary)\n"
            "\n");
 }
 
@@ -253,6 +278,85 @@ void print_token_line(token *line) {
             exit(1);
         }
     }
+}
+
+// Asumes little endian
+void printBits(size_t const size, void const * const ptr) {
+    unsigned char *b = (unsigned char*) ptr;
+    unsigned char byte;
+    int i, j;
+
+    for (i = size-1; i >= 0; i--) {
+        for (j = 7; j>=0; j--) {
+            byte = (b[i] >> j) & 1;
+            fprintf(stderr, "%u", byte);
+        }
+    }
+}
+
+void displayWord(unsigned long index, BlarbVM_WORD word) {
+    switch (dump_display_mode) {
+    case DISPLAY_BINARY:
+        fprintf(stderr, "%lu: ", index);
+        printBits(sizeof(word), &word);
+        fprintf(stderr, " \n");
+        break;
+    case DISPLAY_UNSIGNED_INTEGER:
+        fprintf(stderr, "%lu: %lu \n", index, word);
+        break;
+    case DISPLAY_SIGNED_INTEGER:
+        fprintf(stderr, "%lu: %ld \n", index, word);
+        break;
+    case DISPLAY_HEX:
+        fprintf(stderr, "%lu: %016lx\n", index, word);
+        break;
+    default:
+        fprintf(stderr, "Invalid word display mode\n");
+        exit(1);
+        break;
+    }
+}
+
+void BlarbVM_dumpDebug(BlarbVM *vm) {
+	unsigned long i;
+
+	fprintf(stderr, "\nBeginning BlarbVM dump:\n");
+
+	fprintf(stderr, "\nRegisters:\n");
+	for (i = 0; i < sizeof(vm->registers) / sizeof(BlarbVM_WORD); i++) {
+		BlarbVM_WORD value = vm->registers[i];
+
+        if (i == 0) {
+            // Register 0 is the line pointer, so let's output some useful info
+
+            BlarbVM_WORD lp = vm->registers[0];
+
+            if (lp < vm->lineCount) {
+                LineDebugInfo *info = &vm->linesDebug[lp];
+                fprintf(stderr, "%lu: %lx (%s:%lu)\n",
+                        i, value, info->fileName, info->line);
+            } else {
+                fprintf(stderr, "%lu: %lx (invalid line pointer)\n",
+                        i, value);
+            }
+        } else {
+            displayWord(i, value);
+        }
+	}
+	fprintf(stderr, "\nStack:\n");
+
+	for (i = 0; i < vm->stack_top; i++) {
+		BlarbVM_WORD value = vm->stack[i];
+        displayWord(i, value);
+	}
+
+	fprintf(stderr, "\nHeap (%lu):\n", vm->heapSize);
+	for (i = 0; i < vm->heapSize; i++) {
+		char byteValue = ((char*)vm->heap)[i];
+		fprintf(stderr, "%lx: %08x\n", i, byteValue);
+	}
+
+	fprintf(stderr, "\nDump complete.\n\n");
 }
 
 void list_current_context(BlarbVM *vm) {

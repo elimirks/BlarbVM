@@ -361,48 +361,6 @@ void BlarbVM_execute(BlarbVM *vm) {
     }
 }
 
-void BlarbVM_dumpDebug(BlarbVM *vm) {
-	unsigned long i;
-
-	fprintf(stderr, "\nBeginning BlarbVM dump:\n");
-
-	fprintf(stderr, "\nRegisters:\n");
-	for (i = 0; i < sizeof(vm->registers) / sizeof(BlarbVM_WORD); i++) {
-		BlarbVM_WORD value = vm->registers[i];
-
-        if (i == 0) {
-            // Register 0 is the line pointer, so let's output some useful info
-
-            BlarbVM_WORD lp = vm->registers[0];
-
-            if (lp < vm->lineCount) {
-                LineDebugInfo *info = &vm->linesDebug[lp];
-                fprintf(stderr, "%lu: %lx (%s:%lu)\n",
-                        i, value, info->fileName, info->line);
-            } else {
-                fprintf(stderr, "%lu: %lx (invalid line pointer)\n",
-                        i, value);
-            }
-        } else {
-            fprintf(stderr, "%lu: %lx \n", i, value);
-        }
-	}
-	fprintf(stderr, "\nStack:\n");
-
-	for (i = 0; i < vm->stack_top; i++) {
-		BlarbVM_WORD value = vm->stack[i];
-		fprintf(stderr, "%lu: %lx\n", i, value);
-	}
-
-	fprintf(stderr, "\nHeap (%lu):\n", vm->heapSize);
-	for (i = 0; i < vm->heapSize; i++) {
-		char byteValue = ((char*)vm->heap)[i];
-		fprintf(stderr, "%lx: %08x\n", i, byteValue);
-	}
-
-	fprintf(stderr, "\nDump complete.\n\n");
-}
-
 void BlarbVM_init(BlarbVM *vm) {
 	memset(vm, 0, sizeof(BlarbVM));
 	vm->heap = malloc(1); // Give it some random address to start with
